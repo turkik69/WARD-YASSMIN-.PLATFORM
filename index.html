@@ -542,16 +542,16 @@ img{max-width:100%; display:block;}
     <div id="settings-status" class="error-box" style="background:var(--teal-wash); color:var(--teal-dark); text-align:right;"></div>
     <div id="settings-key-form">
       <p style="font-size:13.5px; color:var(--text-soft); line-height:1.9; margin:14px 0;">
-        عند فتح هذه المنصة خارج تطبيق Claude (مثل متصفح Safari مباشرة)، تحتاج المنصة مفتاح Anthropic API حتى تعمل الدروس والاختبارات والمعلّم الذكي. المفتاح يُحفظ على هذا الجهاز فقط، ولا يُرسل لأي مكان سوى Anthropic مباشرة.
+        عند فتح هذه المنصة خارج تطبيق Claude (مثل متصفح Safari مباشرة)، تحتاج المنصة مفتاح Gemini API — مجاني بالكامل من Google، بدون بطاقة ائتمان أو فوترة — حتى تعمل الدروس والاختبارات والمعلّم الذكي. المفتاح يُحفظ على هذا الجهاز فقط، ولا يُرسل لأي مكان سوى Google مباشرة.
       </p>
       <div class="field">
-        <label>مفتاح Anthropic API</label>
-        <input type="password" id="input-api-key" placeholder="sk-ant-...">
+        <label>مفتاح Gemini API</label>
+        <input type="password" id="input-api-key" placeholder="AIzaSy...">
       </div>
       <button class="btn btn-rose" id="btn-save-key" style="margin-top:6px">حفظ المفتاح</button>
       <button class="btn btn-outline" id="btn-clear-key" style="margin-top:10px">حذف المفتاح المحفوظ</button>
       <p style="font-size:12.5px; color:var(--text-faint); line-height:1.8; margin-top:18px;">
-        يمكنك إنشاء مفتاح من console.anthropic.com (حساب Anthropic API منفصل عن اشتراك Claude، ويُفوتَر حسب الاستخدام). داخل تطبيق Claude نفسه لا حاجة لأي مفتاح — المنصة تعمل تلقائياً.
+        احصلي على مفتاح مجاني من aistudio.google.com (بحساب Google عادي، بدون بطاقة). ملاحظة: على الخطة المجانية قد تُستخدم المحادثات لتحسين نماذج Google — لا يُنصح بإدخال معلومات حساسة. داخل تطبيق Claude نفسه لا حاجة لأي مفتاح — المنصة تعمل تلقائياً ومجاناً.
       </p>
     </div>
   </div>
@@ -578,6 +578,10 @@ img{max-width:100%; display:block;}
 /* ---------- constants & data ---------- */
 const API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-6";
+// Standalone fallback (outside claude.ai): Google Gemini — genuinely free tier,
+// no billing required. gemini-3.7-flash confirmed free-tier eligible as of Aug 2026.
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_MODEL = "gemini-3.7-flash";
 
 const SUBJECTS = {
   chemistry: { name:'الكيمياء', theme:'rose' },
@@ -658,7 +662,16 @@ async function storageSet(key, value){
 }
 function loadApiKey(){
   if(HAS_ARTIFACT_STORAGE) return; // not needed in this environment
-  try{ userApiKey = localStorage.getItem('wy_api_key') || null; }catch(e){ userApiKey = null; }
+  try{
+    userApiKey = localStorage.getItem('wy_api_key') || null;
+    // Migration: a previously-stored Anthropic key (sk-ant-...) won't work
+    // against the Gemini endpoint — clear it so the settings screen prompts
+    // for a fresh Gemini key instead of silently failing.
+    if(userApiKey && userApiKey.indexOf('sk-ant-')===0){
+      localStorage.removeItem('wy_api_key');
+      userApiKey = null;
+    }
+  }catch(e){ userApiKey = null; }
 }
 function saveApiKey(key){
   userApiKey = key || null;
@@ -738,16 +751,18 @@ function extractJSON(text){
 function describeError(err){
   const msg = String((err && err.message) || err || '');
   if(msg==='no_api_key'){
-    return 'هذه النسخة مفتوحة خارج تطبيق Claude، وتحتاج مفتاح Anthropic API لتعمل. اضغطي أيقونة الإعدادات ⚙️ أعلى الصفحة وأدخلي المفتاح (مرة واحدة فقط لكل جهاز).';
+    return 'هذه النسخة مفتوحة خارج تطبيق Claude، وتحتاج مفتاح Gemini API مجاني لتعمل. اضغطي أيقونة الإعدادات ⚙️ أعلى الصفحة وأدخلي المفتاح (مرة واحدة فقط لكل جهاز).';
+  }
+  if(msg.startsWith('gemini_blocked_')){
+    return 'تم إيقاف الرد لأسباب متعلقة بسياسة المحتوى ('+msg.replace('gemini_blocked_','')+'). حاولي إعادة صياغة السؤال.';
   }
   if(msg.startsWith('api_error_')){
     const code = msg.replace('api_error_','');
     const detail = err && err.detail ? ' — '+err.detail : '';
-    if(code==='429') return 'تم تجاوز عدد الطلبات المسموح مؤقتاً (خطأ ٤٢٩). انتظري دقيقة ثم حاولي مرة أخرى.';
-    if(code==='401') return 'مفتاح API غير صحيح أو منتهي الصلاحية (خطأ ٤٠١). افتحي الإعدادات ⚙️ وتأكدي من المفتاح.'+detail;
-    if(code==='403') return 'تم رفض الوصول (خطأ ٤٠٣).'+detail;
-    if(code==='400') return 'طلب غير صحيح (خطأ ٤٠٠).'+detail;
-    if(code.startsWith('5')) return 'خطأ مؤقت من خادم الذكاء الاصطناعي (رمز '+toArabicNum(code)+'). حاولي مرة أخرى خلال دقيقة.';
+    if(code==='429') return 'تم تجاوز عدد الطلبات المسموح به مؤقتاً على الخطة المجانية (خطأ ٤٢٩). انتظري دقيقة ثم حاولي مرة أخرى.';
+    if(code==='400') return 'مفتاح API غير صحيح الصيغة، أو الطلب غير مقبول (خطأ ٤٠٠). افتحي الإعدادات ⚙️ وتأكدي من نسخ المفتاح كاملاً من Google AI Studio.'+detail;
+    if(code==='403') return 'تم رفض الوصول بهذا المفتاح (خطأ ٤٠٣) — تأكدي أن المفتاح فعّال من aistudio.google.com.'+detail;
+    if(code.startsWith('5')) return 'خطأ مؤقت من خادم Gemini (رمز '+toArabicNum(code)+'). حاولي مرة أخرى خلال دقيقة.';
     return 'رد الخادم بخطأ (رمز '+toArabicNum(code)+').'+detail;
   }
   if(msg==='json_parse_failed') return 'وصل الرد من الذكاء الاصطناعي، لكن تعذّر قراءة صيغته. اضغطي إعادة المحاولة.';
@@ -756,40 +771,77 @@ function describeError(err){
     if(HAS_ARTIFACT_STORAGE){
       return 'تعذّر الوصول لخدمة الذكاء الاصطناعي داخل هذه الصفحة. جرّبي فتح المنصة من متصفح (Safari/Chrome عبر claude.ai) بدل التطبيق مباشرة.';
     }
-    return 'تعذّر الاتصال بخدمة الذكاء الاصطناعي. تحققي من اتصال الإنترنت ومن صحة مفتاح API في الإعدادات ⚙️.';
+    return 'تعذّر الاتصال بخدمة Gemini. تحققي من اتصال الإنترنت ومن صحة المفتاح في الإعدادات ⚙️.';
   }
   return 'خطأ غير متوقع: '+escapeHtml(msg.slice(0,140));
 }
 
 /* ---------- AI call ---------- */
-async function callAI({system, messages, maxTokens, tools}){
-  if(!HAS_ARTIFACT_STORAGE && !userApiKey){
-    const e = new Error('no_api_key'); throw e;
+/* ---------- AI call — routes to whichever backend is active ----------
+   Inside Claude.ai: free, keyless call to Anthropic (handled by the platform).
+   Standalone: user's own Gemini API key (Google AI Studio) — genuinely free
+   tier, no billing required, unlike a standalone Anthropic key. */
+function toGeminiContents(messages){
+  return messages.map(m=>{
+    const role = m.role==='assistant' ? 'model' : 'user';
+    let parts;
+    if(typeof m.content === 'string'){
+      parts = [{ text: m.content }];
+    } else {
+      parts = (m.content||[]).map(block=>{
+        if(block.type==='image') return { inline_data:{ mime_type:block.source.media_type, data:block.source.data } };
+        return { text: block.text||'' };
+      });
+    }
+    return { role, parts };
+  });
+}
+async function callAI({system, messages, maxTokens, webSearch, jsonMode}){
+  if(HAS_ARTIFACT_STORAGE){
+    const body = { model:MODEL, max_tokens: maxTokens||2200, messages };
+    if(system) body.system = system;
+    if(webSearch) body.tools = [{type:'web_search_20250305', name:'web_search'}];
+    const res = await fetch(API_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    if(!res.ok){
+      let detail=''; try{ const eb=await res.json(); detail=(eb&&eb.error&&eb.error.message)||''; }catch(e){}
+      const e = new Error('api_error_'+res.status); e.detail = detail; throw e;
+    }
+    const data = await res.json();
+    return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
   }
-  const body = { model:MODEL, max_tokens: maxTokens||2200, messages };
-  if(system) body.system = system;
-  if(tools) body.tools = tools;
-  const headers = {'Content-Type':'application/json'};
-  if(!HAS_ARTIFACT_STORAGE && userApiKey){
-    headers['x-api-key'] = userApiKey;
-    headers['anthropic-version'] = '2023-06-01';
-    headers['anthropic-dangerous-direct-browser-access'] = 'true';
-  }
-  const res = await fetch(API_URL, { method:'POST', headers, body:JSON.stringify(body) });
+
+  if(!userApiKey){ throw new Error('no_api_key'); }
+  const body = {
+    contents: toGeminiContents(messages),
+    generationConfig: { maxOutputTokens: maxTokens||2200 }
+  };
+  if(system) body.system_instruction = { parts:[{ text: system }] };
+  if(jsonMode) body.generationConfig.response_mime_type = 'application/json';
+  if(webSearch) body.tools = [{ google_search: {} }];
+  const res = await fetch(`${GEMINI_API_URL}/${GEMINI_MODEL}:generateContent`, {
+    method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':userApiKey}, body:JSON.stringify(body)
+  });
   if(!res.ok){
-    let detail = '';
-    try{ const errBody = await res.json(); detail = (errBody && errBody.error && errBody.error.message) || ''; }catch(e){}
+    let detail=''; try{ const eb=await res.json(); detail=(eb&&eb.error&&eb.error.message)||''; }catch(e){}
     const e = new Error('api_error_'+res.status); e.detail = detail; throw e;
   }
   const data = await res.json();
-  const parts = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text);
-  return parts.join('\n').trim();
+  const cand = data.candidates && data.candidates[0];
+  const parts = (cand && cand.content && cand.content.parts) || [];
+  const text = parts.map(p=>p.text||'').join('\n').trim();
+  if(!text && cand && cand.finishReason && cand.finishReason!=='STOP'){
+    throw new Error('gemini_blocked_'+cand.finishReason);
+  }
+  return text;
 }
 
 function baseSystemContext(){
   const s = SUBJECTS[state.subject] ? SUBJECTS[state.subject].name : '';
   return `أنت جزء من منصة "ورد وياسمين" التعليمية الموجّهة لطلاب المدارس الحكومية في سلطنة عُمان. تتحدث دائماً باللغة العربية الفصحى المبسّطة المناسبة لعمر الطالب (${state.grade===9?'الصف التاسع':'الصف العاشر'}), بأسلوب مشجّع وصبور. عند وجود معادلات أو رموز رياضية أو كيميائية استخدم صيغة LaTeX: $...$ للمعادلات داخل السطر و$$...$$ للمعادلات المنفصلة.`;
 }
+
 
 /* ---------- navigation ---------- */
 const BACK_TARGETS = {
@@ -1153,7 +1205,7 @@ async function generateExam(type){
 أجب فقط بصيغة JSON صحيحة دون أي نص إضافي أو علامات Markdown، بالشكل التالي بالضبط:
 {"questions":[{"type":"mcq","question":"نص السؤال","options":["أ","ب","ج","د"],"answerIndex":0,"topic":"اسم الموضوع"},{"type":"short","question":"نص السؤال","modelAnswer":"إجابة نموذجية مختصرة","topic":"اسم الموضوع"}]}
 استخدم $...$ داخل نص الأسئلة عند الحاجة لمعادلات.`;
-    const raw = await callAI({ system: baseSystemContext(), messages:[{role:'user', content: prompt}], maxTokens: 2800 });
+    const raw = await callAI({ system: baseSystemContext(), messages:[{role:'user', content: prompt}], maxTokens: 2800, jsonMode:true });
     const parsed = extractJSON(raw);
     if(!parsed.questions || !parsed.questions.length) throw new Error('empty_exam');
     state.currentExam = { type, questions: parsed.questions };
@@ -1230,7 +1282,7 @@ async function gradeExam(){
 4) قدّم نصائح دراسية عملية ومحددة لتحسين الأداء.
 أجب فقط بصيغة JSON صحيحة دون أي نص إضافي، بالشكل التالي بالضبط:
 {"shortResults":[{"index":0,"correct":true,"feedback":"شرح مختصر"}],"weaknesses":["موضوع١"],"strengths":["موضوع٢"],"tips":["نصيحة١","نصيحة٢"]}`;
-    const raw = await callAI({ system: baseSystemContext(), messages:[{role:'user', content: prompt}], maxTokens: 2200 });
+    const raw = await callAI({ system: baseSystemContext(), messages:[{role:'user', content: prompt}], maxTokens: 2200, jsonMode:true });
     const parsed = extractJSON(raw);
     const shortMap = {}; (parsed.shortResults||[]).forEach(r=> shortMap[r.index]=r);
 
@@ -1325,8 +1377,7 @@ async function sendTutorMessage(text){
   try{
     const sys = baseSystemContext() + ` مهمتك أن تجيب عن أي سؤال يطرحه الطالب في مادة ${SUBJECTS[state.subject].name} بشرح علمي مفصّل وسهل، خطوة بخطوة، مع أمثلة عند الحاجة. إن احتجت معلومة حديثة يمكنك البحث في الإنترنت.`;
     const reply = await callAI({
-      system: sys, messages: state.tutorHistory, maxTokens: 1500,
-      tools: [{type:'web_search_20250305', name:'web_search'}]
+      system: sys, messages: state.tutorHistory, maxTokens: 1500, webSearch: true
     });
     removeTyping();
     state.tutorHistory.push({role:'assistant', content: reply});
