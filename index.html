@@ -324,6 +324,9 @@ img{max-width:100%; display:block;}
   <button id="btn-switch" class="icon-btn" aria-label="تبديل الطالب">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>
   </button>
+  <button id="btn-settings" class="icon-btn" aria-label="الإعدادات">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
 </header>
 
 <main id="app-main">
@@ -515,6 +518,28 @@ img{max-width:100%; display:block;}
   <div id="history-list" style="padding-top:10px"></div>
 </section>
 
+<!-- ============ SETTINGS / API KEY ============ -->
+<section id="screen-settings" class="screen">
+  <div class="detail-head"><div class="crumb">الإعدادات</div><h2>الاتصال بالذكاء الاصطناعي</h2></div>
+  <div class="pad" style="padding-top:8px">
+    <div id="settings-status" class="error-box" style="background:var(--teal-wash); color:var(--teal-dark); text-align:right;"></div>
+    <div id="settings-key-form">
+      <p style="font-size:13.5px; color:var(--text-soft); line-height:1.9; margin:14px 0;">
+        عند فتح هذه المنصة خارج تطبيق Claude (مثل متصفح Safari مباشرة)، تحتاج المنصة مفتاح Anthropic API حتى تعمل الدروس والاختبارات والمعلّم الذكي. المفتاح يُحفظ على هذا الجهاز فقط، ولا يُرسل لأي مكان سوى Anthropic مباشرة.
+      </p>
+      <div class="field">
+        <label>مفتاح Anthropic API</label>
+        <input type="password" id="input-api-key" placeholder="sk-ant-...">
+      </div>
+      <button class="btn btn-rose" id="btn-save-key" style="margin-top:6px">حفظ المفتاح</button>
+      <button class="btn btn-outline" id="btn-clear-key" style="margin-top:10px">حذف المفتاح المحفوظ</button>
+      <p style="font-size:12.5px; color:var(--text-faint); line-height:1.8; margin-top:18px;">
+        يمكنك إنشاء مفتاح من console.anthropic.com (حساب Anthropic API منفصل عن اشتراك Claude، ويُفوتَر حسب الاستخدام). داخل تطبيق Claude نفسه لا حاجة لأي مفتاح — المنصة تعمل تلقائياً.
+      </p>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <script>
@@ -571,17 +596,49 @@ let state = {
   progress:{}, backStack:[]
 };
 
-/* ---------- storage helpers ---------- */
+/* ---------- environment detection ----------
+   Inside claude.ai (web/desktop), window.storage exists and the AI
+   endpoint authenticates automatically — no key needed.
+   Opened standalone (Safari, GitHub Pages, saved to home screen, the
+   Claude mobile app's in-app browser, etc.), neither exists, so we
+   fall back to localStorage + a user-supplied Anthropic API key,
+   exactly like ميزان does. */
+const HAS_ARTIFACT_STORAGE = !!(window.storage && typeof window.storage.get === 'function');
+let userApiKey = null;
+
+/* ---------- storage helpers (auto-routes to the right backend) ---------- */
 async function storageGet(key, fallback){
+  if(HAS_ARTIFACT_STORAGE){
+    try{
+      const res = await window.storage.get(key, false);
+      if(!res || res.value===undefined || res.value===null) return fallback;
+      return res.value;
+    }catch(e){ return fallback; }
+  }
   try{
-    const res = await window.storage.get(key, false);
-    if(!res || res.value===undefined || res.value===null) return fallback;
-    return res.value;
+    const v = localStorage.getItem('wy_'+key);
+    return v===null ? fallback : v;
   }catch(e){ return fallback; }
 }
 async function storageSet(key, value){
-  try{ await window.storage.set(key, value, false); return true; }
-  catch(e){ console.error('storage set failed', key, e); return false; }
+  if(HAS_ARTIFACT_STORAGE){
+    try{ await window.storage.set(key, value, false); return true; }
+    catch(e){ console.error('storage set failed', key, e); return false; }
+  }
+  try{ localStorage.setItem('wy_'+key, value); return true; }
+  catch(e){ console.error('localStorage set failed', key, e); return false; }
+}
+function loadApiKey(){
+  if(HAS_ARTIFACT_STORAGE) return; // not needed in this environment
+  try{ userApiKey = localStorage.getItem('wy_api_key') || null; }catch(e){ userApiKey = null; }
+}
+function saveApiKey(key){
+  userApiKey = key || null;
+  try{
+    if(userApiKey) localStorage.setItem('wy_api_key', userApiKey);
+    else localStorage.removeItem('wy_api_key');
+    return true;
+  }catch(e){ return false; }
 }
 async function loadStudents(){ return JSON.parse(await storageGet('wy-students','[]')); }
 async function saveStudents(list){ return storageSet('wy-students', JSON.stringify(list)); }
@@ -652,30 +709,50 @@ function extractJSON(text){
 // instead of a generic "check your connection" — so the real cause is visible.
 function describeError(err){
   const msg = String((err && err.message) || err || '');
+  if(msg==='no_api_key'){
+    return 'هذه النسخة مفتوحة خارج تطبيق Claude، وتحتاج مفتاح Anthropic API لتعمل. اضغطي أيقونة الإعدادات ⚙️ أعلى الصفحة وأدخلي المفتاح (مرة واحدة فقط لكل جهاز).';
+  }
   if(msg.startsWith('api_error_')){
     const code = msg.replace('api_error_','');
+    const detail = err && err.detail ? ' — '+err.detail : '';
     if(code==='429') return 'تم تجاوز عدد الطلبات المسموح مؤقتاً (خطأ ٤٢٩). انتظري دقيقة ثم حاولي مرة أخرى.';
-    if(code==='401'||code==='403') return 'تعذّر التحقق من صلاحية الحساب (خطأ '+toArabicNum(code)+'). تأكدي أن خاصية "Code execution and file creation" مُفعّلة من إعدادات > Capabilities في تطبيق Claude.';
+    if(code==='401') return 'مفتاح API غير صحيح أو منتهي الصلاحية (خطأ ٤٠١). افتحي الإعدادات ⚙️ وتأكدي من المفتاح.'+detail;
+    if(code==='403') return 'تم رفض الوصول (خطأ ٤٠٣).'+detail;
+    if(code==='400') return 'طلب غير صحيح (خطأ ٤٠٠).'+detail;
     if(code.startsWith('5')) return 'خطأ مؤقت من خادم الذكاء الاصطناعي (رمز '+toArabicNum(code)+'). حاولي مرة أخرى خلال دقيقة.';
-    return 'رد الخادم بخطأ (رمز '+toArabicNum(code)+').';
+    return 'رد الخادم بخطأ (رمز '+toArabicNum(code)+').'+detail;
   }
   if(msg==='json_parse_failed') return 'وصل الرد من الذكاء الاصطناعي، لكن تعذّر قراءة صيغته. اضغطي إعادة المحاولة.';
   if(msg==='empty_exam') return 'وصل الرد لكن بدون أسئلة. اضغطي إعادة المحاولة.';
   if(/Failed to fetch|NetworkError|Load failed|TypeError/i.test(msg)){
-    return 'تعذّر الوصول لخدمة الذكاء الاصطناعي داخل هذه الصفحة. الأكثر شيوعاً: (١) الحاجة للضغط على "Publish" أعلى المنصة أولاً، أو (٢) فتح هذه المنصة من متصفح الجوال (Safari/Chrome عبر claude.ai) بدل تطبيق Claude، لأن بعض ميزات المنصات الذكية لا تعمل بعد داخل التطبيق مباشرة على الجوال.';
+    if(HAS_ARTIFACT_STORAGE){
+      return 'تعذّر الوصول لخدمة الذكاء الاصطناعي داخل هذه الصفحة. جرّبي فتح المنصة من متصفح (Safari/Chrome عبر claude.ai) بدل التطبيق مباشرة.';
+    }
+    return 'تعذّر الاتصال بخدمة الذكاء الاصطناعي. تحققي من اتصال الإنترنت ومن صحة مفتاح API في الإعدادات ⚙️.';
   }
   return 'خطأ غير متوقع: '+escapeHtml(msg.slice(0,140));
 }
 
 /* ---------- AI call ---------- */
 async function callAI({system, messages, maxTokens, tools}){
+  if(!HAS_ARTIFACT_STORAGE && !userApiKey){
+    const e = new Error('no_api_key'); throw e;
+  }
   const body = { model:MODEL, max_tokens: maxTokens||2200, messages };
   if(system) body.system = system;
   if(tools) body.tools = tools;
-  const res = await fetch(API_URL, {
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
-  });
-  if(!res.ok) throw new Error('api_error_'+res.status);
+  const headers = {'Content-Type':'application/json'};
+  if(!HAS_ARTIFACT_STORAGE && userApiKey){
+    headers['x-api-key'] = userApiKey;
+    headers['anthropic-version'] = '2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  }
+  const res = await fetch(API_URL, { method:'POST', headers, body:JSON.stringify(body) });
+  if(!res.ok){
+    let detail = '';
+    try{ const errBody = await res.json(); detail = (errBody && errBody.error && errBody.error.message) || ''; }catch(e){}
+    const e = new Error('api_error_'+res.status); e.detail = detail; throw e;
+  }
   const data = await res.json();
   const parts = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text);
   return parts.join('\n').trim();
@@ -696,7 +773,8 @@ const BACK_TARGETS = {
   'screen-exam-results':'screen-subject-hub',
   'screen-tutor':'screen-subject-hub',
   'screen-photo':'screen-subject-hub',
-  'screen-history':'screen-subject-hub'
+  'screen-history':'screen-subject-hub',
+  'screen-settings':'screen-dashboard'
 };
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -704,9 +782,11 @@ function showScreen(id){
   const header = document.getElementById('app-header');
   const backBtn = document.getElementById('btn-back');
   const switchBtn = document.getElementById('btn-switch');
-  if(id==='screen-login'){ header.classList.add('hidden'); }
-  else{
-    header.classList.remove('hidden');
+  header.classList.remove('hidden');
+  if(id==='screen-login'){
+    backBtn.classList.add('hidden');
+    switchBtn.classList.add('hidden');
+  } else {
     if(BACK_TARGETS[id]){ backBtn.classList.remove('hidden'); backBtn.dataset.target = BACK_TARGETS[id]; }
     else { backBtn.classList.add('hidden'); }
     switchBtn.classList.toggle('hidden', id!=='screen-dashboard');
@@ -726,6 +806,50 @@ document.getElementById('btn-back').addEventListener('click', (e)=>{
   if(target) showScreen(target);
 });
 document.getElementById('btn-switch').addEventListener('click', ()=> renderLoginScreen());
+
+/* ============================================================
+   SETTINGS / API KEY
+   ============================================================ */
+let preSettingsScreen = 'screen-dashboard';
+function openSettings(){
+  const active = document.querySelector('.screen.active');
+  if(active && active.id!=='screen-settings') preSettingsScreen = active.id;
+  renderSettingsScreen();
+  showScreen('screen-settings');
+  document.getElementById('btn-back').dataset.target = preSettingsScreen;
+  document.getElementById('btn-back').classList.remove('hidden');
+}
+function renderSettingsScreen(){
+  const statusBox = document.getElementById('settings-status');
+  const form = document.getElementById('settings-key-form');
+  if(HAS_ARTIFACT_STORAGE){
+    statusBox.textContent = '✓ متصلة تلقائياً عبر تطبيق Claude — لا حاجة لأي مفتاح هنا.';
+    statusBox.style.display = 'block';
+    form.style.opacity = '.5';
+  } else {
+    form.style.opacity = '1';
+    if(userApiKey){
+      statusBox.textContent = '✓ تم حفظ مفتاح API على هذا الجهاز — المنصة تعمل بشكل مستقل.';
+      statusBox.style.display = 'block';
+    } else {
+      statusBox.style.display = 'none';
+    }
+    document.getElementById('input-api-key').value = '';
+  }
+}
+document.getElementById('btn-settings').addEventListener('click', openSettings);
+document.getElementById('btn-save-key').addEventListener('click', ()=>{
+  const val = document.getElementById('input-api-key').value.trim();
+  if(!val){ showToast('أدخلي المفتاح أولاً','error'); return; }
+  saveApiKey(val);
+  showToast('تم حفظ المفتاح بنجاح','success');
+  renderSettingsScreen();
+});
+document.getElementById('btn-clear-key').addEventListener('click', ()=>{
+  saveApiKey(null);
+  showToast('تم حذف المفتاح');
+  renderSettingsScreen();
+});
 
 /* ============================================================
    LOGIN / PROFILES
@@ -1280,6 +1404,7 @@ async function openHistory(){
    INIT
    ============================================================ */
 (async function init(){
+  loadApiKey();
   const activeId = await storageGet('wy-active-student', null);
   if(activeId){
     const students = await loadStudents();
