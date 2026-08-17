@@ -648,6 +648,24 @@ function extractJSON(text){
   }
   throw new Error('json_parse_failed');
 }
+// Turns a raw JS/fetch error into a specific, actionable Arabic message
+// instead of a generic "check your connection" — so the real cause is visible.
+function describeError(err){
+  const msg = String((err && err.message) || err || '');
+  if(msg.startsWith('api_error_')){
+    const code = msg.replace('api_error_','');
+    if(code==='429') return 'تم تجاوز عدد الطلبات المسموح مؤقتاً (خطأ ٤٢٩). انتظري دقيقة ثم حاولي مرة أخرى.';
+    if(code==='401'||code==='403') return 'تعذّر التحقق من صلاحية الحساب (خطأ '+toArabicNum(code)+'). تأكدي أن خاصية "Code execution and file creation" مُفعّلة من إعدادات > Capabilities في تطبيق Claude.';
+    if(code.startsWith('5')) return 'خطأ مؤقت من خادم الذكاء الاصطناعي (رمز '+toArabicNum(code)+'). حاولي مرة أخرى خلال دقيقة.';
+    return 'رد الخادم بخطأ (رمز '+toArabicNum(code)+').';
+  }
+  if(msg==='json_parse_failed') return 'وصل الرد من الذكاء الاصطناعي، لكن تعذّر قراءة صيغته. اضغطي إعادة المحاولة.';
+  if(msg==='empty_exam') return 'وصل الرد لكن بدون أسئلة. اضغطي إعادة المحاولة.';
+  if(/Failed to fetch|NetworkError|Load failed|TypeError/i.test(msg)){
+    return 'تعذّر الوصول لخدمة الذكاء الاصطناعي داخل هذه الصفحة. الأكثر شيوعاً: (١) الحاجة للضغط على "Publish" أعلى المنصة أولاً، أو (٢) فتح هذه المنصة من متصفح الجوال (Safari/Chrome عبر claude.ai) بدل تطبيق Claude، لأن بعض ميزات المنصات الذكية لا تعمل بعد داخل التطبيق مباشرة على الجوال.';
+  }
+  return 'خطأ غير متوقع: '+escapeHtml(msg.slice(0,140));
+}
 
 /* ---------- AI call ---------- */
 async function callAI({system, messages, maxTokens, tools}){
@@ -916,7 +934,8 @@ async function openLessonDetail(){
     });
     document.getElementById('btn-complete-lesson').addEventListener('click', markLessonComplete);
   }catch(err){
-    body.innerHTML = `<div class="error-box">تعذّر تحميل الشرح، تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</div>
+    console.error('lesson generation failed:', err);
+    body.innerHTML = `<div class="error-box">${describeError(err)}</div>
       <div class="detail-actions"><button class="btn btn-rose" id="btn-retry-lesson">إعادة المحاولة</button></div>`;
     document.getElementById('btn-retry-lesson').addEventListener('click', openLessonDetail);
   }
@@ -987,8 +1006,11 @@ async function generateExam(type){
     state.studentAnswers = new Array(parsed.questions.length).fill(null);
     renderExamQuestions();
   }catch(err){
-    document.getElementById('exam-questions').innerHTML = `<div class="error-box">تعذّر إنشاء الاختبار، تحقق من الاتصال وحاول مرة أخرى.</div>`;
+    console.error('exam generation failed:', err);
+    document.getElementById('exam-questions').innerHTML = `<div class="error-box">${describeError(err)}</div>
+      <div class="detail-actions"><button class="btn btn-rose" id="btn-retry-exam-gen">إعادة المحاولة</button></div>`;
     document.getElementById('exam-taking-title').textContent = 'حدث خطأ';
+    document.getElementById('btn-retry-exam-gen').addEventListener('click', ()=> generateExam(type));
   }
 }
 function renderExamQuestions(){
@@ -1099,7 +1121,10 @@ async function gradeExam(){
     document.getElementById('res-body').innerHTML = html;
     typesetMath(document.getElementById('res-body'));
   }catch(err){
-    document.getElementById('res-body').innerHTML = `<div class="error-box">تعذّر تصحيح الاختبار تلقائياً بسبب مشكلة في الاتصال. حاول مرة أخرى.</div>`;
+    console.error('exam grading failed:', err);
+    document.getElementById('res-body').innerHTML = `<div class="error-box">${describeError(err)}</div>
+      <div class="detail-actions"><button class="btn btn-rose" id="btn-retry-grade">إعادة محاولة التصحيح</button></div>`;
+    document.getElementById('btn-retry-grade').addEventListener('click', gradeExam);
   }
   document.querySelector('.fixed-cta').classList.remove('hidden');
 }
@@ -1154,8 +1179,10 @@ async function sendTutorMessage(text){
     const el = appendChatMsg('ai', formatAIText(reply));
     typesetMath(el);
   }catch(err){
+    console.error('tutor call failed:', err);
     removeTyping();
-    appendChatMsg('ai', 'عذراً، حدث خطأ في الاتصال. تحقق من الإنترنت وحاول مرة أخرى.', true);
+    state.tutorHistory.pop();
+    appendChatMsg('ai', describeError(err), true);
   }
   document.getElementById('btn-send-chat').disabled = false;
 }
@@ -1215,7 +1242,10 @@ document.getElementById('btn-explain-photo').addEventListener('click', async ()=
     resultBox.innerHTML = `<div class="content-box">${formatAIText(reply)}</div>`;
     typesetMath(resultBox);
   }catch(err){
-    resultBox.innerHTML = `<div class="error-box">تعذّر تحليل الصورة، تحقق من الاتصال وحاول مرة أخرى.</div>`;
+    console.error('photo explain failed:', err);
+    resultBox.innerHTML = `<div class="error-box">${describeError(err)}</div>
+      <div class="detail-actions"><button class="btn btn-rose" id="btn-retry-photo">إعادة المحاولة</button></div>`;
+    document.getElementById('btn-retry-photo').addEventListener('click', ()=> document.getElementById('btn-explain-photo').click());
   }
 });
 
