@@ -733,6 +733,24 @@ async function loadHistory(id){
 }
 async function saveHistory(id, hist){ return storageSet('wy-history-'+id, JSON.stringify(hist)); }
 
+// Lessons are cached once generated: they don't need internet on repeat visits.
+async function loadLessonCache(id){
+  const raw = await storageGet('wy-lessons-'+id, null);
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return {};
+}
+async function saveLessonCache(id, cache){ return storageSet('wy-lessons-'+id, JSON.stringify(cache)); }
+function lessonCacheKey(subject, topic){ return subject+'::'+topic; }
+
+// Exams are never cached, but we remember recent question text per topic so
+// freshly-generated exams are told explicitly to avoid repeating them.
+async function loadRecentQuestions(id){
+  const raw = await storageGet('wy-recent-q-'+id, null);
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return {};
+}
+async function saveRecentQuestions(id, data){ return storageSet('wy-recent-q-'+id, JSON.stringify(data)); }
+
 /* ---------- levels, stars & motivation ---------- */
 const LEVELS = [
   { min:0,  name:'مستكشف',  emoji:'🌱' },
@@ -1212,44 +1230,64 @@ function openLessonsList(){
   showScreen('screen-lessons');
 }
 
-async function openLessonDetail(){
+async function openLessonDetail(forceRegenerate){
   const s = SUBJECTS[state.subject];
   document.getElementById('lesson-crumb').textContent = `${s.name} · ${semLabel(state.semester)}`;
   document.getElementById('lesson-title').textContent = state.currentTopic;
   const body = document.getElementById('lesson-body');
-  body.innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري إعداد الشرح...</p></div>`;
   showScreen('screen-lesson-detail');
 
+  const cacheKey = lessonCacheKey(state.subject, state.currentTopic);
+  const lessonCache = await loadLessonCache(state.studentId);
+
+  if(!forceRegenerate && lessonCache[cacheKey]){
+    renderLessonBody(lessonCache[cacheKey].text, true);
+    return;
+  }
+
+  body.innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري إعداد الشرح...</p></div>`;
   try{
+    const variety = forceRegenerate ? '\nقدّمي هذه المرة شرحاً بأسلوب وأمثلة مختلفة عن أي شرح سابق لنفس الدرس، دون تغيير صحة المحتوى العلمي.' : '';
     const prompt = `اشرح للطالب درس "${state.currentTopic}" من مادة ${s.name} - ${gradeLabel(state.grade)} في سلطنة عُمان، ضمن ${semLabel(state.semester)}.
 اجعل الشرح بالتنسيق التالي بالضبط (بدون Markdown مثل ** أو *، فقط الأسطر كما هي):
 - ابدأ سطر بـ "## " للعناوين الرئيسية
 - استخدم "- " لبداية كل نقطة في قائمة
 - فقرات عادية بدون رمز في البداية
-غطِّ: مقدمة قصيرة، المفاهيم الأساسية، شرح مفصل خطوة بخطوة بأسلوب مبسّط، مثال أو مثالين محلولين، ثم خلاصة بأهم النقاط، ثم نصائح للمذاكرة والفهم. استخدم $...$ للمعادلات إن وجدت. لا تتجاوز ٤٠٠ كلمة تقريباً.`;
+غطِّ: مقدمة قصيرة، المفاهيم الأساسية، شرح مفصل خطوة بخطوة بأسلوب مبسّط، مثال أو مثالين محلولين، ثم خلاصة بأهم النقاط، ثم نصائح للمذاكرة والفهم. استخدم $...$ للمعادلات إن وجدت. لا تتجاوز ٤٠٠ كلمة تقريباً.${variety}`;
     const text = await callAI({
       system: baseSystemContext(),
       messages:[{role:'user', content: prompt}],
       maxTokens: 1800
     });
-    body.innerHTML = `
-      <div class="content-box">${formatAIText(text)}</div>
-      <div class="detail-actions">
-        <button class="btn btn-outline" id="btn-ask-about-lesson">اسأل عن هذا الدرس</button>
-        <button class="btn btn-rose" id="btn-complete-lesson">تم — أنهيت الدرس ✓</button>
-      </div>`;
-    typesetMath(body);
-    document.getElementById('btn-ask-about-lesson').addEventListener('click', ()=>{
-      openTutor();
-      seedTutorMessage(`لدي سؤال بخصوص درس "${state.currentTopic}"، هل يمكنك مساعدتي؟`);
-    });
-    document.getElementById('btn-complete-lesson').addEventListener('click', markLessonComplete);
+    lessonCache[cacheKey] = { text, savedAt: new Date().toISOString() };
+    await saveLessonCache(state.studentId, lessonCache);
+    renderLessonBody(text, false);
   }catch(err){
     console.error('lesson generation failed:', err);
     body.innerHTML = `<div class="error-box">${describeError(err)}</div>
       <div class="detail-actions"><button class="btn btn-rose" id="btn-retry-lesson">إعادة المحاولة</button></div>`;
-    document.getElementById('btn-retry-lesson').addEventListener('click', openLessonDetail);
+    document.getElementById('btn-retry-lesson').addEventListener('click', ()=>openLessonDetail(forceRegenerate));
   }
+}
+function renderLessonBody(text, fromCache){
+  const body = document.getElementById('lesson-body');
+  body.innerHTML = `
+    ${fromCache ? '<p style="padding:10px 18px 0; font-size:11.5px; color:var(--text-faint);">💾 محفوظ على جهازك — يعمل بدون إنترنت</p>' : ''}
+    <div class="content-box">${formatAIText(text)}</div>
+    <div class="detail-actions">
+      <button class="btn btn-outline" id="btn-ask-about-lesson">اسأل عن هذا الدرس</button>
+      <button class="btn btn-rose" id="btn-complete-lesson">تم — أنهيت الدرس ✓</button>
+    </div>
+    <div style="padding:0 16px 20px; text-align:center;">
+      <button class="link-btn" id="btn-reexplain-lesson">إعادة الشرح بطريقة مختلفة 🔄</button>
+    </div>`;
+  typesetMath(body);
+  document.getElementById('btn-ask-about-lesson').addEventListener('click', ()=>{
+    openTutor();
+    seedTutorMessage(`لدي سؤال بخصوص درس "${state.currentTopic}"، هل يمكنك مساعدتي؟`);
+  });
+  document.getElementById('btn-complete-lesson').addEventListener('click', markLessonComplete);
+  document.getElementById('btn-reexplain-lesson').addEventListener('click', ()=>openLessonDetail(true));
 }
 async function markLessonComplete(){
   const subj = state.subject, sem = state.semester, topic = state.currentTopic;
@@ -1305,9 +1343,15 @@ async function generateExam(type){
   document.getElementById('exam-questions').innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري إعداد ${cfg.name}...</p></div>`;
 
   try{
+    const recentQ = await loadRecentQuestions(state.studentId);
+    const avoidList = [];
+    scopeTopics.forEach(t=>{ (recentQ[t]||[]).forEach(q=>avoidList.push(q)); });
+    const avoidBlock = avoidList.length
+      ? `\nمهم: هذه أسئلة استُخدمت في محاولات سابقة على نفس المواضيع — لا تكرريها ولا تكرري صياغتها، قدّمي أسئلة مختلفة تماماً (زوايا أو تطبيقات أخرى من نفس الموضوع):\n${avoidList.map(q=>'- '+q).join('\n')}`
+      : '';
     const prompt = `أنشئ اختباراً في مادة ${s.name} لطالب في ${gradeLabel(state.grade)} في سلطنة عُمان، يغطي المواضيع التالية: ${scopeTopics.join('، ')}.
 عدد الأسئلة: ${cfg.count}. اجعل نحو ٧٠٪ من نوع اختيار من متعدد (mcq) بأربعة خيارات، والباقي أسئلة قصيرة (short).
-مهم جداً: قيمة "topic" في كل سؤال يجب أن تُطابق نصياً وبالضبط أحد هذه الأسماء (دون أي تعديل أو اختصار): ${scopeTopics.map(t=>'"'+t+'"').join('، ')}.
+مهم جداً: قيمة "topic" في كل سؤال يجب أن تُطابق نصياً وبالضبط أحد هذه الأسماء (دون أي تعديل أو اختصار): ${scopeTopics.map(t=>'"'+t+'"').join('، ')}.${avoidBlock}
 أجب فقط بصيغة JSON صحيحة دون أي نص إضافي أو علامات Markdown، بالشكل التالي بالضبط:
 {"questions":[{"type":"mcq","question":"نص السؤال","options":["أ","ب","ج","د"],"answerIndex":0,"topic":"اسم الموضوع"},{"type":"short","question":"نص السؤال","modelAnswer":"إجابة نموذجية مختصرة","topic":"اسم الموضوع"}]}
 استخدم $...$ داخل نص الأسئلة عند الحاجة لمعادلات.`;
@@ -1316,6 +1360,16 @@ async function generateExam(type){
     if(!parsed.questions || !parsed.questions.length) throw new Error('empty_exam');
     state.currentExam = { type, questions: parsed.questions };
     state.studentAnswers = new Array(parsed.questions.length).fill(null);
+
+    // Remember these questions per-topic so the next exam avoids repeating them
+    parsed.questions.forEach(q=>{
+      if(!q.topic) return;
+      if(!recentQ[q.topic]) recentQ[q.topic] = [];
+      recentQ[q.topic].push(q.question);
+      if(recentQ[q.topic].length > 15) recentQ[q.topic] = recentQ[q.topic].slice(-15);
+    });
+    await saveRecentQuestions(state.studentId, recentQ);
+
     renderExamQuestions();
   }catch(err){
     console.error('exam generation failed:', err);
