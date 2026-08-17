@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>منصة ورد وياسمين التعليمية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" id="mathjax-script" async></script>
+<style>
+:root{
+  --rose:#8C2A46; --rose-dark:#6E2038; --rose-wash:#F7EAEF;
+  --teal:#2A6B62; --teal-dark:#1F5148; --teal-wash:#E8F1EE;
+  --gold:#B9872C; --gold-dark:#96691E; --gold-wash:#FBF1DD;
+  --ink:#1E2A3A; --ink-light:#37485F;
+  --paper:#FBF6EE; --paper-card:#F6EFE1; --paper-card-2:#EFE4CE;
+  --text:#2B2620; --text-soft:#77695A; --text-faint:#A79A87;
+  --success:#3F7D58; --success-wash:#E7F1EA;
+  --error:#AF483C; --error-wash:#F7E9E5;
+  --border:#E5D8C2;
+  --r-s:10px; --r-m:16px; --r-l:26px;
+  --shadow:0 4px 18px rgba(30,42,58,.09);
+  --shadow-lg:0 16px 44px rgba(30,42,58,.16);
+  --font-d:'Cairo',sans-serif; --font-b:'Tajawal',sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-b); background:var(--paper); color:var(--text);
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column;
+}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+input,textarea,select{font-family:inherit; font-size:16px;}
+ul{list-style:none;}
+img{max-width:100%; display:block;}
+::selection{background:var(--gold-wash);}
+
+/* ===== layout shells ===== */
+.hidden{display:none !important;}
+.app-header{
+  position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:10px;
+  padding:14px 16px; background:var(--ink); color:#fff;
+  box-shadow:0 2px 14px rgba(0,0,0,.15);
+}
+.header-brand{display:flex; align-items:center; gap:8px; flex:1; min-width:0;}
+.header-brand svg{width:30px; height:30px; flex-shrink:0;}
+.header-brand .titles{display:flex; flex-direction:column; line-height:1.15; min-width:0;}
+.header-brand .titles b{font-family:var(--font-d); font-weight:800; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.header-brand .titles span{font-size:11.5px; color:#C9D3DE;}
+.icon-btn{
+  width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  color:#fff; background:rgba(255,255,255,.08); flex-shrink:0; transition:background .15s;
+}
+.icon-btn:active{background:rgba(255,255,255,.22);}
+.icon-btn svg{width:19px; height:19px;}
+
+#app-main{flex:1; display:flex; flex-direction:column; width:100%; max-width:640px; margin:0 auto; position:relative;}
+.screen{display:none; flex-direction:column; flex:1; animation:fadeIn .25s ease;}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+.pad{padding:18px 16px 90px;}
+
+/* ===== brand mark (signature botanical stroke) ===== */
+.wy-mark path{stroke:currentColor;}
+.wy-mark .b1{fill:var(--rose);} .wy-mark .b2{fill:var(--gold);}
+
+/* ===== login ===== */
+.login-wrap{flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:36px 22px; text-align:center; gap:6px;}
+.login-mark{width:150px; height:60px; color:var(--ink-light); opacity:.8; margin-bottom:6px;}
+.login-title{font-family:var(--font-d); font-weight:900; font-size:28px; color:var(--ink); letter-spacing:.5px;}
+.login-sub{color:var(--text-soft); font-size:14.5px; margin-top:6px; margin-bottom:28px;}
+.profile-list{width:100%; max-width:380px; display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
+.profile-card{
+  display:flex; align-items:center; gap:12px; width:100%; background:#fff; border:1px solid var(--border);
+  border-radius:var(--r-m); padding:13px 16px; box-shadow:var(--shadow); text-align:right;
+  transition:transform .15s;
+}
+.profile-card:active{transform:scale(.98);}
+.profile-avatar{
+  width:42px; height:42px; border-radius:50%; background:var(--rose-wash); color:var(--rose);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-weight:800; font-size:17px; flex-shrink:0;
+}
+.profile-meta{flex:1; min-width:0;}
+.profile-meta b{font-family:var(--font-d); font-size:15.5px; display:block;}
+.profile-meta span{font-size:12.5px; color:var(--text-soft);}
+.profile-card svg{width:16px; height:16px; color:var(--text-faint); flex-shrink:0;}
+
+.btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  border-radius:var(--r-m); padding:14px 20px; font-family:var(--font-d); font-weight:700; font-size:15px;
+  transition:transform .12s, box-shadow .12s; width:100%;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--ink); color:#fff; box-shadow:0 8px 22px rgba(30,42,58,.28);}
+.btn-outline{background:#fff; color:var(--ink); border:1.5px solid var(--border);}
+.btn-rose{background:var(--rose); color:#fff; box-shadow:0 8px 20px rgba(140,42,70,.3);}
+.btn-teal{background:var(--teal); color:#fff; box-shadow:0 8px 20px rgba(42,107,98,.3);}
+.btn-gold{background:var(--gold); color:#fff; box-shadow:0 8px 20px rgba(185,135,44,.3);}
+.btn-sm{padding:10px 16px; font-size:13.5px; width:auto;}
+.btn svg{width:18px; height:18px;}
+
+.new-student-form{width:100%; max-width:380px; display:flex; flex-direction:column; gap:16px; text-align:right;}
+.field label{display:block; font-size:13px; color:var(--text-soft); margin-bottom:7px; font-weight:600;}
+.field input{
+  width:100%; padding:13px 15px; border-radius:var(--r-s); border:1.5px solid var(--border); background:#fff; font-size:15.5px;
+}
+.field input:focus{outline:none; border-color:var(--ink-light);}
+.grade-pick{display:flex; gap:10px;}
+.grade-opt{
+  flex:1; padding:16px 8px; border-radius:var(--r-m); border:1.5px solid var(--border); background:#fff;
+  text-align:center; font-family:var(--font-d); font-weight:700; color:var(--text-soft); transition:.15s;
+}
+.grade-opt.selected{border-color:var(--rose); background:var(--rose-wash); color:var(--rose-dark);}
+.grade-opt .num{font-size:24px; display:block; margin-bottom:2px;}
+.link-btn{color:var(--text-soft); font-size:13.5px; text-decoration:underline; padding:8px;}
+
+/* ===== dashboard ===== */
+.dash-greet{padding:22px 18px 6px;}
+.dash-greet h1{font-family:var(--font-d); font-weight:800; font-size:22px; color:var(--ink);}
+.dash-greet p{color:var(--text-soft); font-size:13.5px; margin-top:4px;}
+.nudge{
+  margin:14px 16px; background:linear-gradient(135deg,var(--ink),var(--ink-light)); color:#fff;
+  border-radius:var(--r-l); padding:18px 18px; box-shadow:var(--shadow-lg); position:relative; overflow:hidden;
+}
+.nudge::after{content:''; position:absolute; inset-inline-end:-30px; top:-30px; width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,.06);}
+.nudge .tag{font-size:11.5px; background:rgba(255,255,255,.15); display:inline-block; padding:4px 10px; border-radius:20px; margin-bottom:10px;}
+.nudge h3{font-family:var(--font-d); font-size:17px; font-weight:800; margin-bottom:4px;}
+.nudge p{font-size:13px; color:#D8DEE7; margin-bottom:14px;}
+.nudge button{background:#fff; color:var(--ink); padding:10px 18px; border-radius:var(--r-s); font-family:var(--font-d); font-weight:800; font-size:13.5px;}
+
+.section-title{padding:20px 18px 10px; font-family:var(--font-d); font-weight:800; font-size:15.5px; color:var(--ink);}
+.subject-grid{padding:0 16px; display:flex; flex-direction:column; gap:12px;}
+.subject-card{
+  display:flex; align-items:center; gap:14px; background:#fff; border-radius:var(--r-l); padding:16px;
+  box-shadow:var(--shadow); border:1px solid var(--border); position:relative; overflow:hidden;
+}
+.subject-card:active{transform:scale(.985);}
+.subject-card .ic{
+  width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.subject-card .ic svg{width:27px; height:27px;}
+.subject-card.rose .ic{background:var(--rose-wash); color:var(--rose);}
+.subject-card.teal .ic{background:var(--teal-wash); color:var(--teal);}
+.subject-card.gold .ic{background:var(--gold-wash); color:var(--gold-dark);}
+.subject-card .info{flex:1; text-align:right;}
+.subject-card .info b{font-family:var(--font-d); font-size:17px; display:block;}
+.subject-card .info span{font-size:12.5px; color:var(--text-soft);}
+.subject-card .chev{color:var(--text-faint); flex-shrink:0;}
+.subject-card .chev svg{width:16px; height:16px;}
+.subject-card .progress-bar{position:absolute; bottom:0; inset-inline-start:0; height:3px; background:var(--border); width:100%;}
+.subject-card .progress-bar i{display:block; height:100%; background:currentColor;}
+.subject-card.rose .progress-bar i{background:var(--rose);}
+.subject-card.teal .progress-bar i{background:var(--teal);}
+.subject-card.gold .progress-bar i{background:var(--gold);}
+
+/* ===== subject hub ===== */
+.hub-banner{padding:22px 18px 16px; color:#fff; position:relative; overflow:hidden;}
+.hub-banner::after{content:''; position:absolute; inset-inline-end:-40px; top:-50px; width:170px; height:170px; border-radius:50%; background:rgba(255,255,255,.08);}
+#screen-subject-hub.rose .hub-banner{background:linear-gradient(135deg,var(--rose),var(--rose-dark));}
+#screen-subject-hub.teal .hub-banner{background:linear-gradient(135deg,var(--teal),var(--teal-dark));}
+#screen-subject-hub.gold .hub-banner{background:linear-gradient(135deg,var(--gold),var(--gold-dark));}
+.hub-banner h2{font-family:var(--font-d); font-weight:900; font-size:23px;}
+.hub-banner p{font-size:12.5px; opacity:.85; margin-top:3px;}
+.sem-tabs{display:flex; gap:8px; padding:14px 16px 4px;}
+.sem-tab{flex:1; text-align:center; padding:10px; border-radius:12px; background:#fff; border:1.5px solid var(--border); font-family:var(--font-d); font-weight:700; font-size:13.5px; color:var(--text-soft);}
+.sem-tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+.mode-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:16px;}
+.mode-card{
+  background:#fff; border-radius:var(--r-m); padding:18px 12px; text-align:center; border:1px solid var(--border); box-shadow:var(--shadow);
+}
+.mode-card:active{transform:scale(.96);}
+.mode-card svg{width:26px; height:26px; margin-bottom:9px; color:var(--ink);}
+.mode-card b{display:block; font-family:var(--font-d); font-weight:700; font-size:14px;}
+.mode-card span{font-size:11px; color:var(--text-soft); display:block; margin-top:2px;}
+.mode-card.wide{grid-column:span 2; display:flex; align-items:center; gap:12px; text-align:right; padding:14px 16px;}
+.mode-card.wide svg{margin-bottom:0;}
+
+/* ===== lists / topics ===== */
+.topic-list{padding:6px 16px 90px; display:flex; flex-direction:column; gap:10px;}
+.topic-row{
+  display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border); border-radius:var(--r-m);
+  padding:14px 15px; box-shadow:var(--shadow);
+}
+.topic-row .num{
+  width:30px; height:30px; border-radius:50%; background:var(--paper-card); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-d); font-weight:800; font-size:13px; color:var(--text-soft); flex-shrink:0;
+}
+.topic-row.done .num{background:var(--success-wash); color:var(--success);}
+.topic-row .t{flex:1; font-size:14.5px; font-weight:600;}
+.topic-row .check{width:20px; height:20px; color:var(--success); flex-shrink:0;}
+
+/* ===== lesson detail ===== */
+.detail-head{padding:18px 16px 6px;}
+.detail-head .crumb{font-size:12px; color:var(--text-soft); margin-bottom:4px;}
+.detail-head h2{font-family:var(--font-d); font-weight:800; font-size:20px; color:var(--ink);}
+.content-box{padding:14px 18px 20px; font-size:15px; line-height:2;}
+.content-box h2{font-family:var(--font-d); font-size:18px; font-weight:800; color:var(--rose-dark); margin:20px 0 8px;}
+.content-box h3{font-family:var(--font-d); font-size:16px; font-weight:800; color:var(--ink); margin:18px 0 7px; padding-inline-start:10px; border-inline-start:3px solid var(--gold);}
+.content-box p{margin-bottom:12px; color:var(--text);}
+.content-box ul{margin:0 0 12px; padding-inline-start:20px;}
+.content-box li{list-style:disc; margin-bottom:6px;}
+.detail-actions{display:flex; gap:10px; padding:8px 16px 30px; position:sticky; bottom:0; background:linear-gradient(to top,var(--paper) 60%,transparent);}
+
+/* ===== loader / empty / toast ===== */
+.loader-box{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 30px; text-align:center;}
+.spinner{width:38px; height:38px; border-radius:50%; border:3.5px solid var(--border); border-top-color:var(--rose); animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-box p{color:var(--text-soft); font-size:13.5px;}
+.error-box{margin:16px; background:var(--error-wash); color:var(--error); border-radius:var(--r-m); padding:16px; font-size:13.5px; text-align:center;}
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); z-index:100;
+  background:var(--ink); color:#fff; padding:12px 22px; border-radius:30px; font-size:13.5px; opacity:0; pointer-events:none;
+  transition:.25s; box-shadow:var(--shadow-lg); max-width:88%; text-align:center;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+.toast.error{background:var(--error);}
+.toast.success{background:var(--success);}
+
+/* ===== exam setup ===== */
+.exam-type-card{
+  background:#fff; border:1.5px solid var(--border); border-radius:var(--r-l); padding:16px; margin:0 16px 12px; display:flex; gap:14px; align-items:center;
+}
+.exam-type-card.selected{border-color:var(--rose); background:var(--rose-wash);}
+.exam-type-card .ic{width:44px; height:44px; border-radius:12px; background:var(--paper-card); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.exam-type-card .ic svg{width:22px; height:22px; color:var(--ink);}
+.exam-type-card .info b{font-family:var(--font-d); font-size:15px; display:block;}
+.exam-type-card .info span{font-size:12px; color:var(--text-soft);}
+.topic-pick-wrap{padding:0 16px 12px;}
+.topic-pick-wrap select{width:100%; padding:13px; border-radius:var(--r-s); border:1.5px solid var(--border); background:#fff; font-size:14.5px;}
+.fixed-cta{position:sticky; bottom:0; padding:14px 16px 26px; background:linear-gradient(to top,var(--paper) 65%,transparent);}
+
+/* ===== exam taking ===== */
+.q-card{background:#fff; border:1px solid var(--border); border-radius:var(--r-l); padding:17px 16px; margin:0 16px 14px; box-shadow:var(--shadow);}
+.q-card .q-num{font-family:var(--font-d); font-size:12px; font-weight:800; color:var(--rose); margin-bottom:6px;}
+.q-card .q-text{font-size:15px; font-weight:600; line-height:1.8; margin-bottom:13px;}
+.opt-row{display:flex; align-items:center; gap:10px; padding:11px 13px; border:1.5px solid var(--border); border-radius:12px; margin-bottom:8px;}
+.opt-row.picked{border-color:var(--ink); background:var(--paper-card);}
+.opt-row .letter{width:24px; height:24px; border-radius:50%; background:var(--paper-card); display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:800; flex-shrink:0; font-family:var(--font-d);}
+.opt-row.picked .letter{background:var(--ink); color:#fff;}
+.opt-row span.opt-text{flex:1; font-size:14px;}
+.short-input{width:100%; border:1.5px solid var(--border); border-radius:12px; padding:12px; font-size:14.5px; min-height:70px; resize:vertical;}
+
+/* ===== exam results ===== */
+.score-hero{margin:16px; padding:26px 20px; border-radius:var(--r-l); text-align:center; background:linear-gradient(135deg,var(--ink),var(--ink-light)); color:#fff; box-shadow:var(--shadow-lg);}
+.score-hero .big{font-family:var(--font-d); font-weight:900; font-size:42px;}
+.score-hero .lbl{font-size:13px; color:#D3DAE3; margin-top:4px;}
+.res-section{padding:6px 16px;}
+.res-section h4{font-family:var(--font-d); font-size:14.5px; font-weight:800; margin:16px 0 9px; display:flex; align-items:center; gap:7px;}
+.res-section h4 svg{width:17px; height:17px;}
+.res-q{background:#fff; border:1px solid var(--border); border-radius:var(--r-m); padding:13px 14px; margin-bottom:9px;}
+.res-q .top{display:flex; align-items:flex-start; gap:9px;}
+.res-q .badge{width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;}
+.res-q .badge.ok{background:var(--success-wash); color:var(--success);}
+.res-q .badge.bad{background:var(--error-wash); color:var(--error);}
+.res-q .badge svg{width:13px; height:13px;}
+.res-q .qt{font-size:13.5px; font-weight:600; flex:1;}
+.res-q .fb{font-size:12.5px; color:var(--text-soft); margin-top:7px; padding-inline-start:31px; line-height:1.7;}
+.chip-list{display:flex; flex-wrap:wrap; gap:7px;}
+.chip{background:var(--gold-wash); color:var(--gold-dark); font-size:12px; font-weight:700; padding:6px 13px; border-radius:20px;}
+.tip-row{display:flex; gap:9px; align-items:flex-start; font-size:13px; color:var(--text); margin-bottom:8px; line-height:1.7;}
+.tip-row svg{width:15px; height:15px; color:var(--teal); flex-shrink:0; margin-top:3px;}
+
+/* ===== chat / tutor ===== */
+.chat-wrap{flex:1; display:flex; flex-direction:column; height:100%;}
+.chat-msgs{flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;}
+.msg{max-width:82%; padding:12px 15px; border-radius:18px; font-size:14.5px; line-height:1.85;}
+.msg.user{margin-inline-start:auto; background:var(--ink); color:#fff; border-end-end-radius:4px;}
+.msg.ai{margin-inline-end:auto; background:#fff; border:1px solid var(--border); border-end-start-radius:4px;}
+.msg.ai h3{font-family:var(--font-d); font-size:14.5px; color:var(--rose-dark); margin:6px 0 4px;}
+.msg.ai p{margin-bottom:8px;}
+.msg.ai ul{padding-inline-start:18px; margin-bottom:8px;}
+.msg.ai li{list-style:disc; margin-bottom:4px;}
+.chat-hint{text-align:center; color:var(--text-faint); font-size:12.5px; padding:24px 30px;}
+.chat-input-row{display:flex; gap:9px; padding:12px 14px; background:#fff; border-top:1px solid var(--border); position:sticky; bottom:0;}
+.chat-input-row textarea{flex:1; border:1.5px solid var(--border); border-radius:22px; padding:11px 17px; font-size:14.5px; resize:none; max-height:90px;}
+.chat-input-row textarea:focus{outline:none; border-color:var(--ink-light);}
+.send-btn{width:44px; height:44px; border-radius:50%; background:var(--rose); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.send-btn svg{width:19px; height:19px;}
+.send-btn:disabled{opacity:.4;}
+.typing-dots{display:flex; gap:4px; padding:6px 3px;}
+.typing-dots span{width:6px; height:6px; border-radius:50%; background:var(--text-faint); animation:blink 1.2s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;} .typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,60%,100%{opacity:.3;} 30%{opacity:1;}}
+
+/* ===== photo ===== */
+.photo-wrap{padding:18px 16px 40px;}
+.upload-zone{
+  border:2px dashed var(--border); border-radius:var(--r-l); padding:34px 20px; text-align:center; background:#fff; margin-bottom:16px;
+}
+.upload-zone svg{width:36px; height:36px; color:var(--text-faint); margin-bottom:10px;}
+.upload-zone p{font-size:13.5px; color:var(--text-soft); margin-bottom:14px;}
+.preview-img{width:100%; border-radius:var(--r-m); margin-bottom:16px; max-height:340px; object-fit:contain; background:#fff; border:1px solid var(--border);}
+
+/* ===== history ===== */
+.hist-row{display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border); border-radius:var(--r-m); padding:13px 15px; margin:0 16px 10px; box-shadow:var(--shadow);}
+.hist-row .pct{width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-weight:800; font-size:12.5px; flex-shrink:0;}
+.hist-row .info{flex:1;}
+.hist-row .info b{font-size:13.5px; display:block;}
+.hist-row .info span{font-size:11.5px; color:var(--text-soft);}
+
+@media(min-width:640px){ .content-box{font-size:15.5px;} }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<header id="app-header" class="app-header hidden">
+  <button id="btn-back" class="icon-btn hidden" aria-label="رجوع">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+  <div class="header-brand">
+    <svg class="wy-mark" viewBox="0 0 40 40" fill="none"><path d="M4 28 Q14 10 24 20 T36 10" stroke-width="1.6" opacity=".55"/><circle class="b1" cx="15" cy="18" r="4.2"/><circle class="b2" cx="29" cy="13" r="3.3"/></svg>
+    <div class="titles"><b id="hdr-title">ورد وياسمين</b><span id="hdr-sub">منصة تعليمية</span></div>
+  </div>
+  <button id="btn-switch" class="icon-btn" aria-label="تبديل الطالب">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>
+  </button>
+</header>
+
+<main id="app-main">
+
+<!-- ============ LOGIN ============ -->
+<section id="screen-login" class="screen active">
+  <div class="login-wrap">
+    <svg class="login-mark" viewBox="0 0 200 70" fill="none"><path d="M15 50 Q60 8 100 32 T190 15" stroke="#37485F" stroke-width="1.8" opacity=".5"/><circle cx="55" cy="26" r="8" fill="#8C2A46"/><circle cx="135" cy="20" r="6.2" fill="#B9872C"/></svg>
+    <div class="login-title">ورد وياسمين</div>
+    <div class="login-sub">منصتكم التعليمية للكيمياء والفيزياء والرياضيات</div>
+
+    <div id="profile-picker">
+      <div id="profile-list" class="profile-list"></div>
+      <button class="btn btn-primary" id="btn-new-student" style="max-width:380px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        إضافة طالب جديد
+      </button>
+    </div>
+
+    <form id="new-student-form" class="new-student-form hidden">
+      <div class="field">
+        <label>اسم الطالب</label>
+        <input type="text" id="input-name" placeholder="اكتب الاسم هنا" required>
+      </div>
+      <div class="field">
+        <label>الصف الدراسي</label>
+        <div class="grade-pick">
+          <button type="button" class="grade-opt" data-grade="9"><span class="num">٩</span>الصف التاسع</button>
+          <button type="button" class="grade-opt" data-grade="10"><span class="num">١٠</span>الصف العاشر</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-rose">ابدأ التعلّم</button>
+      <button type="button" id="btn-cancel-new" class="link-btn hidden">رجوع لقائمة الطلاب</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="screen-dashboard" class="screen">
+  <div class="dash-greet">
+    <h1 id="dash-greeting">مرحباً 👋</h1>
+    <p id="dash-sub">اختر المادة التي تريد التعلّم فيها اليوم</p>
+  </div>
+  <div id="nudge-container"></div>
+  <div class="section-title">المواد الدراسية</div>
+  <div class="subject-grid">
+    <button class="subject-card rose" data-subject="chemistry">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9V3"/><path d="M7.5 14h9"/></svg></div>
+      <div class="info"><b>الكيمياء</b><span id="prog-chemistry-lbl">ابدأ رحلتك</span></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="progress-bar"><i id="prog-chemistry-bar" style="width:0%"></i></div>
+    </button>
+    <button class="subject-card teal" data-subject="physics">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="9" ry="3.8"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(120 12 12)"/></svg></div>
+      <div class="info"><b>الفيزياء</b><span id="prog-physics-lbl">ابدأ رحلتك</span></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="progress-bar"><i id="prog-physics-bar" style="width:0%"></i></div>
+    </button>
+    <button class="subject-card gold" data-subject="math">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19 19 4M4 4h6M4 4v6M15 15h5v5"/></svg></div>
+      <div class="info"><b>الرياضيات</b><span id="prog-math-lbl">ابدأ رحلتك</span></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="progress-bar"><i id="prog-math-bar" style="width:0%"></i></div>
+    </button>
+  </div>
+  <div style="height:20px"></div>
+</section>
+
+<!-- ============ SUBJECT HUB ============ -->
+<section id="screen-subject-hub" class="screen">
+  <div class="hub-banner">
+    <h2 id="hub-subject-name">المادة</h2>
+    <p id="hub-subject-grade">الصف</p>
+  </div>
+  <div class="sem-tabs">
+    <button class="sem-tab" data-sem="1">الفصل الأول</button>
+    <button class="sem-tab" data-sem="2">الفصل الثاني</button>
+  </div>
+  <div class="mode-grid">
+    <button class="mode-card" data-mode="lessons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/><path d="M8 8h9M8 12h9"/></svg>
+      <b>الدروس</b><span>اشرح لي المنهج</span>
+    </button>
+    <button class="mode-card" data-mode="exams">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+      <b>الاختبارات</b><span>اختبر نفسك</span>
+    </button>
+    <button class="mode-card" data-mode="tutor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 8.5 8.5 0 0 1-3.8-.9L3 20l1.05-3.5A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
+      <b>اسأل المعلّم الذكي</b><span>أي سؤال، أي وقت</span>
+    </button>
+    <button class="mode-card" data-mode="photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1l1.5-2h7L17 6h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      <b>صوّر وافهم</b><span>صوّر صفحة من الكتاب</span>
+    </button>
+    <button class="mode-card wide" data-mode="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 7v5l4 2"/></svg>
+      <div><b>سجل الأداء</b><span>نتائجك السابقة ونقاط تحتاج مراجعة</span></div>
+    </button>
+  </div>
+</section>
+
+<!-- ============ LESSONS LIST ============ -->
+<section id="screen-lessons" class="screen">
+  <div class="detail-head"><div class="crumb" id="lessons-crumb">المادة · الفصل</div><h2>دروس الفصل</h2></div>
+  <div id="lessons-list" class="topic-list"></div>
+</section>
+
+<!-- ============ LESSON DETAIL ============ -->
+<section id="screen-lesson-detail" class="screen">
+  <div class="detail-head"><div class="crumb" id="lesson-crumb">المادة · الدرس</div><h2 id="lesson-title">عنوان الدرس</h2></div>
+  <div id="lesson-body"></div>
+</section>
+
+<!-- ============ EXAM SETUP ============ -->
+<section id="screen-exam-setup" class="screen">
+  <div class="detail-head"><div class="crumb" id="exam-setup-crumb">المادة</div><h2>اختر نوع الاختبار</h2></div>
+  <div style="padding-top:8px">
+    <div class="exam-type-card" data-type="quick">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <div class="info"><b>اختبار قصير</b><span>٥ أسئلة على درس واحد تختاره</span></div>
+    </div>
+    <div class="exam-type-card" data-type="periodic">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v4M16 3v4M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/></svg></div>
+      <div class="info"><b>اختبار فتري</b><span>١٠ أسئلة تغطي عدة دروس من الفصل</span></div>
+    </div>
+    <div class="exam-type-card" data-type="final">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/><path d="m9 11 2 2 4-4"/></svg></div>
+      <div class="info"><b>اختبار نهائي</b><span>١٥ سؤالاً يغطي الفصل الدراسي كاملاً</span></div>
+    </div>
+    <div id="topic-pick-wrap" class="topic-pick-wrap hidden">
+      <select id="quick-topic-select"></select>
+    </div>
+  </div>
+  <div class="fixed-cta"><button class="btn btn-rose" id="btn-start-exam">ابدأ الاختبار</button></div>
+</section>
+
+<!-- ============ EXAM TAKING ============ -->
+<section id="screen-exam-taking" class="screen">
+  <div class="detail-head"><div class="crumb" id="exam-taking-crumb">اختبار</div><h2 id="exam-taking-title">أجب عن الأسئلة</h2></div>
+  <div id="exam-questions" class="pad" style="padding-top:8px"></div>
+  <div class="fixed-cta"><button class="btn btn-rose" id="btn-submit-exam">تسليم الإجابات</button></div>
+</section>
+
+<!-- ============ EXAM RESULTS ============ -->
+<section id="screen-exam-results" class="screen">
+  <div class="score-hero">
+    <div class="big" id="res-score">0/0</div>
+    <div class="lbl" id="res-pct">٠٪</div>
+  </div>
+  <div id="res-body"></div>
+  <div class="fixed-cta"><button class="btn btn-primary" id="btn-results-done">حسناً، متابعة</button></div>
+</section>
+
+<!-- ============ TUTOR CHAT ============ -->
+<section id="screen-tutor" class="screen">
+  <div class="chat-wrap">
+    <div id="chat-msgs" class="chat-msgs">
+      <div class="chat-hint" id="chat-hint">اسأل المعلّم الذكي أي سؤال في المادة، وسيشرح لك الإجابة خطوة بخطوة</div>
+    </div>
+    <div class="chat-input-row">
+      <textarea id="chat-input" rows="1" placeholder="اكتب سؤالك هنا..."></textarea>
+      <button class="send-btn" id="btn-send-chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PHOTO & UNDERSTAND ============ -->
+<section id="screen-photo" class="screen">
+  <div class="detail-head"><div class="crumb" id="photo-crumb">المادة</div><h2>صوّر وافهم</h2></div>
+  <div class="photo-wrap">
+    <div id="upload-zone" class="upload-zone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1l1.5-2h7L17 6h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      <p>صوّر صفحة من كتابك المدرسي، أو اختر صورة محفوظة</p>
+      <button class="btn btn-teal btn-sm" id="btn-pick-photo" style="margin:0 auto">اختيار / تصوير</button>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden">
+    </div>
+    <img id="photo-preview" class="preview-img hidden">
+    <button class="btn btn-rose hidden" id="btn-explain-photo">اشرح لي هذا الدرس</button>
+    <div id="photo-result"></div>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section id="screen-history" class="screen">
+  <div class="detail-head"><div class="crumb" id="history-crumb">المادة</div><h2>سجل الأداء</h2></div>
+  <div id="history-list" style="padding-top:10px"></div>
+</section>
+
+</main>
+
+<script>
+/* ============================================================
+   منصة ورد وياسمين التعليمية — Application Logic
+   ============================================================ */
+
+/* ---------- constants & data ---------- */
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-4-6";
+
+const SUBJECTS = {
+  chemistry: { name:'الكيمياء', theme:'rose' },
+  physics:   { name:'الفيزياء', theme:'teal' },
+  math:      { name:'الرياضيات', theme:'gold' }
+};
+
+const EXAM_TYPES = {
+  quick:    { name:'اختبار قصير', count:5,  scope:'topic' },
+  periodic: { name:'اختبار فتري', count:10, scope:'semester-so-far' },
+  final:    { name:'اختبار نهائي', count:15, scope:'semester-all' }
+};
+
+// Curriculum topic trees — organized to reflect the official Omani MoE
+// subject structure (unit names verified via public curriculum references).
+// Content itself is generated live by the AI tutor, not pre-authored.
+const CURRICULUM = {
+  chemistry: {
+    9:  { 1:["نقاوة المادة وطبيعتها","حالات المادة وتغيراتها","الانتشار في الموائع","فصل المخاليط والمحاليل","التركيب الذري ومستويات الطاقة","التوزيع الإلكتروني والجدول الدوري"],
+          2:["الأحماض والقواعد","خواص الأحماض والقواعد وتفاعلاتها","الأملاح وتكوّنها","مراجعة شاملة على مفاهيم الفصل الثاني"] },
+    10: { 1:["المادة وتركيبها","التفاعلات الكيميائية وكتابة المعادلات","الروابط الكيميائية","الطاقة في التفاعلات الكيميائية","التطبيقات الكيميائية في الحياة اليومية"],
+          2:["الفلزات وخصائصها","استخلاص الفلزات","مدخل إلى الكيمياء العضوية","الألكانات والألكينات","البترول ومشتقاته"] }
+  },
+  physics: {
+    9:  { 1:["الطول والزمن والقياس","الكتلة والوزن","الكثافة","فهم السرعة","القوة المحصّلة وتأثيرها"],
+          2:["الطاقة وتحوّلاتها","الشغل والقدرة","الضغط في الموائع","الحرارة والحرارة النوعية","مراجعة شاملة على مفاهيم الفصل الثاني"] },
+    10: { 1:["الشحنة الكهربائية","مخططات الدوائر الكهربائية","مخاطر الكهرباء والسلامة","تأثيرات القوى","عزم القوة ومركز الكتلة","الشغل والقدرة"],
+          2:["خصائص الموجات","الكهرباء والمغناطيسية","التأثير المغناطيسي لتيار كهربائي","تأثير المحرك الكهربائي","المحوّلات الكهربائية"] }
+  },
+  math: {
+    9:  { 1:["الأعداد والعمليات عليها","الجبر: التعبيرات والمعادلات","الهندسة: الأشكال والزوايا","الإحصاء وتمثيل البيانات","الاحتمالات","المتتاليات والمجموعات"],
+          2:["النسبة المئوية والنسبة والتناسب","التحليل وحل المعادلات","محيط الدائرة ومساحتها","المساحة والحجم","الأشكال ثلاثية الأبعاد","النمو والاضمحلال الأسي","التمثيلات البيانية غير الخطية","الرياضيات المالية"] },
+    10: { 1:["جمع البيانات وتمثيلها","المقاييس الإحصائية والانتشار","الدوائر","الميل والتمثيل البياني للحركة","التمثيل البياني للمسافة والزمن","الدوال","مقدمة في ميل المماس للمنحني"],
+          2:["حساب المثلثات: الزوايا والنسب المثلثية","الهندسة الإحداثية","الاحتمالات المتقدمة","مراجعة وتطبيقات شاملة على الفصل"] }
+  }
+};
+
+/* ---------- state ---------- */
+let state = {
+  studentId:null, studentName:'', grade:null,
+  subject:null, semester:1, currentTopic:null,
+  currentExam:null, studentAnswers:[],
+  tutorHistory:[], photoBase64:null, photoMediaType:null,
+  progress:{}, backStack:[]
+};
+
+/* ---------- storage helpers ---------- */
+async function storageGet(key, fallback){
+  try{
+    const res = await window.storage.get(key, false);
+    if(!res || res.value===undefined || res.value===null) return fallback;
+    return res.value;
+  }catch(e){ return fallback; }
+}
+async function storageSet(key, value){
+  try{ await window.storage.set(key, value, false); return true; }
+  catch(e){ console.error('storage set failed', key, e); return false; }
+}
+async function loadStudents(){ return JSON.parse(await storageGet('wy-students','[]')); }
+async function saveStudents(list){ return storageSet('wy-students', JSON.stringify(list)); }
+async function loadProgress(id){
+  const raw = await storageGet('wy-progress-'+id, null);
+  if(raw) { try{ return JSON.parse(raw); }catch(e){} }
+  return { chemistry:{1:[],2:[]}, physics:{1:[],2:[]}, math:{1:[],2:[]} };
+}
+async function saveProgress(id, prog){ return storageSet('wy-progress-'+id, JSON.stringify(prog)); }
+async function loadHistory(id){
+  const raw = await storageGet('wy-history-'+id, null);
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return [];
+}
+async function saveHistory(id, hist){ return storageSet('wy-history-'+id, JSON.stringify(hist)); }
+
+/* ---------- utils ---------- */
+function gradeLabel(g){ return g===9 ? 'الصف التاسع' : 'الصف العاشر'; }
+function semLabel(s){ return s==1 ? 'الفصل الدراسي الأول' : 'الفصل الدراسي الثاني'; }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toArabicNum(n){ const d=['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']; return String(n).split('').map(c=>/[0-9]/.test(c)?d[c]:c).join(''); }
+function showToast(msg, type){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+}
+function typesetMath(el, attempts){
+  attempts = attempts||0;
+  if(window.MathJax && window.MathJax.typesetPromise){
+    window.MathJax.typesetPromise([el]).catch(()=>{});
+  } else if(attempts < 15){
+    setTimeout(()=>typesetMath(el, attempts+1), 300);
+  }
+}
+function formatAIText(raw){
+  const lines = String(raw||'').split('\n');
+  let html='', para=[], list=[];
+  function flushPara(){ if(para.length){ html += '<p>'+para.join(' ')+'</p>'; para=[]; } }
+  function flushList(){ if(list.length){ html += '<ul>'+list.map(li=>'<li>'+li+'</li>').join('')+'</ul>'; list=[]; } }
+  for(let line of lines){
+    const t = line.trim();
+    if(!t){ flushPara(); flushList(); continue; }
+    if(t.startsWith('## ')){ flushPara(); flushList(); html += '<h3>'+escapeHtml(t.slice(3))+'</h3>'; continue; }
+    if(t.startsWith('# ')){ flushPara(); flushList(); html += '<h2>'+escapeHtml(t.slice(2))+'</h2>'; continue; }
+    if(t.startsWith('- ') || t.startsWith('• ')){ flushPara(); list.push(escapeHtml(t.slice(2))); continue; }
+    flushList(); para.push(escapeHtml(t));
+  }
+  flushPara(); flushList();
+  return html || '<p>'+escapeHtml(raw)+'</p>';
+}
+function extractJSON(text){
+  let t = String(text||'').trim();
+  t = t.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  try{ return JSON.parse(t); }catch(e){}
+  const firstObj = t.indexOf('{'), firstArr = t.indexOf('[');
+  let first = -1;
+  if(firstObj>=0 && firstArr>=0) first = Math.min(firstObj,firstArr);
+  else first = Math.max(firstObj,firstArr);
+  const last = Math.max(t.lastIndexOf('}'), t.lastIndexOf(']'));
+  if(first>=0 && last>first){
+    try{ return JSON.parse(t.slice(first,last+1)); }catch(e){}
+  }
+  throw new Error('json_parse_failed');
+}
+
+/* ---------- AI call ---------- */
+async function callAI({system, messages, maxTokens, tools}){
+  const body = { model:MODEL, max_tokens: maxTokens||2200, messages };
+  if(system) body.system = system;
+  if(tools) body.tools = tools;
+  const res = await fetch(API_URL, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error('api_error_'+res.status);
+  const data = await res.json();
+  const parts = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+  return parts.join('\n').trim();
+}
+
+function baseSystemContext(){
+  const s = SUBJECTS[state.subject] ? SUBJECTS[state.subject].name : '';
+  return `أنت جزء من منصة "ورد وياسمين" التعليمية الموجّهة لطلاب المدارس الحكومية في سلطنة عُمان. تتحدث دائماً باللغة العربية الفصحى المبسّطة المناسبة لعمر الطالب (${state.grade===9?'الصف التاسع':'الصف العاشر'}), بأسلوب مشجّع وصبور. عند وجود معادلات أو رموز رياضية أو كيميائية استخدم صيغة LaTeX: $...$ للمعادلات داخل السطر و$$...$$ للمعادلات المنفصلة.`;
+}
+
+/* ---------- navigation ---------- */
+const BACK_TARGETS = {
+  'screen-subject-hub':'screen-dashboard',
+  'screen-lessons':'screen-subject-hub',
+  'screen-lesson-detail':'screen-lessons',
+  'screen-exam-setup':'screen-subject-hub',
+  'screen-exam-taking':'screen-exam-setup',
+  'screen-exam-results':'screen-subject-hub',
+  'screen-tutor':'screen-subject-hub',
+  'screen-photo':'screen-subject-hub',
+  'screen-history':'screen-subject-hub'
+};
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const header = document.getElementById('app-header');
+  const backBtn = document.getElementById('btn-back');
+  const switchBtn = document.getElementById('btn-switch');
+  if(id==='screen-login'){ header.classList.add('hidden'); }
+  else{
+    header.classList.remove('hidden');
+    if(BACK_TARGETS[id]){ backBtn.classList.remove('hidden'); backBtn.dataset.target = BACK_TARGETS[id]; }
+    else { backBtn.classList.add('hidden'); }
+    switchBtn.classList.toggle('hidden', id!=='screen-dashboard');
+  }
+  if(id!=='screen-tutor'){
+    document.getElementById('hdr-title').textContent = 'ورد وياسمين';
+    document.getElementById('hdr-sub').textContent = 'منصة تعليمية';
+  }
+  window.scrollTo(0,0);
+  const main = document.getElementById('app-main'); if(main) main.scrollTop = 0;
+}
+document.getElementById('btn-back').addEventListener('click', (e)=>{
+  const target = e.currentTarget.dataset.target;
+  if(target==='screen-exam-setup' && document.getElementById('screen-exam-taking').classList.contains('active')){
+    if(!confirm('سيتم فقدان إجاباتك الحالية، هل تريد الرجوع؟')) return;
+  }
+  if(target) showScreen(target);
+});
+document.getElementById('btn-switch').addEventListener('click', ()=> renderLoginScreen());
+
+/* ============================================================
+   LOGIN / PROFILES
+   ============================================================ */
+async function renderLoginScreen(){
+  const students = await loadStudents();
+  const pickerWrap = document.getElementById('profile-picker');
+  const formWrap = document.getElementById('new-student-form');
+  const listEl = document.getElementById('profile-list');
+  document.getElementById('btn-cancel-new').classList.toggle('hidden', students.length===0);
+  if(students.length===0){
+    pickerWrap.classList.add('hidden');
+    formWrap.classList.remove('hidden');
+  } else {
+    pickerWrap.classList.remove('hidden');
+    formWrap.classList.add('hidden');
+    listEl.innerHTML = students.map(st=>`
+      <button class="profile-card" data-id="${st.id}">
+        <div class="profile-avatar">${escapeHtml(st.name.trim().charAt(0)||'ط')}</div>
+        <div class="profile-meta"><b>${escapeHtml(st.name)}</b><span>${gradeLabel(st.grade)}</span></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>`).join('');
+    listEl.querySelectorAll('.profile-card').forEach(btn=>{
+      btn.addEventListener('click', ()=> activateStudent(btn.dataset.id, students));
+    });
+  }
+  showScreen('screen-login');
+}
+async function activateStudent(id, studentsMaybe){
+  const students = studentsMaybe || await loadStudents();
+  const st = students.find(s=>s.id===id);
+  if(!st) return;
+  state.studentId = st.id; state.studentName = st.name; state.grade = st.grade;
+  await storageSet('wy-active-student', st.id);
+  state.progress = await loadProgress(st.id);
+  await renderDashboard();
+}
+document.getElementById('btn-new-student').addEventListener('click', ()=>{
+  document.getElementById('profile-picker').classList.add('hidden');
+  document.getElementById('new-student-form').classList.remove('hidden');
+  document.getElementById('btn-cancel-new').classList.remove('hidden');
+});
+document.getElementById('btn-cancel-new').addEventListener('click', ()=> renderLoginScreen());
+document.querySelectorAll('.grade-opt').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.grade-opt').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    btn.dataset.picked='1';
+  });
+});
+document.getElementById('new-student-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const name = document.getElementById('input-name').value.trim();
+  const gradeBtn = document.querySelector('.grade-opt.selected');
+  if(!name){ showToast('الرجاء إدخال اسم الطالب','error'); return; }
+  if(!gradeBtn){ showToast('الرجاء اختيار الصف الدراسي','error'); return; }
+  const grade = parseInt(gradeBtn.dataset.grade,10);
+  const students = await loadStudents();
+  const newStudent = { id:'stu_'+Date.now(), name, grade };
+  students.push(newStudent);
+  await saveStudents(students);
+  document.getElementById('input-name').value='';
+  document.querySelectorAll('.grade-opt').forEach(b=>b.classList.remove('selected'));
+  await activateStudent(newStudent.id, students);
+});
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function renderDashboard(){
+  document.getElementById('dash-greeting').textContent = `مرحباً، ${state.studentName} 👋`;
+  document.getElementById('dash-sub').textContent = `${gradeLabel(state.grade)} · اختر مادة لتبدأ`;
+
+  Object.keys(SUBJECTS).forEach(subj=>{
+    const tree = CURRICULUM[subj][state.grade];
+    const total = tree[1].length + tree[2].length;
+    const doneArr = (state.progress[subj] && [...(state.progress[subj][1]||[]),...(state.progress[subj][2]||[])]) || [];
+    const done = doneArr.length;
+    const pct = total? Math.round((done/total)*100) : 0;
+    const bar = document.getElementById('prog-'+subj+'-bar'); if(bar) bar.style.width = pct+'%';
+    const lbl = document.getElementById('prog-'+subj+'-lbl');
+    if(lbl) lbl.textContent = done===0 ? 'ابدأ رحلتك' : `أنجزت ${toArabicNum(done)} من ${toArabicNum(total)} درساً`;
+  });
+
+  renderNudge();
+  showScreen('screen-dashboard');
+}
+function renderNudge(){
+  const order = ['chemistry','physics','math'];
+  let found = null;
+  for(const subj of order){
+    for(const sem of [1,2]){
+      const topics = CURRICULUM[subj][state.grade][sem];
+      const doneList = (state.progress[subj] && state.progress[subj][sem]) || [];
+      const next = topics.find(t=>!doneList.includes(t));
+      if(next){ found = {subj, sem, topic:next}; break; }
+    }
+    if(found) break;
+  }
+  const container = document.getElementById('nudge-container');
+  if(!found){
+    container.innerHTML = `<div class="nudge"><span class="tag">أحسنت!</span><h3>أنجزت كل دروس المنهج 🎉</h3><p>يمكنك الآن مراجعة أي مادة عبر الاختبارات أو المعلّم الذكي</p></div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="nudge">
+      <span class="tag">الدرس المقترح التالي</span>
+      <h3>${escapeHtml(found.topic)}</h3>
+      <p>${SUBJECTS[found.subj].name} · ${semLabel(found.sem)}</p>
+      <button id="nudge-start">ابدأ الآن</button>
+    </div>`;
+  document.getElementById('nudge-start').addEventListener('click', ()=>{
+    state.subject = found.subj; state.semester = found.sem; state.currentTopic = found.topic;
+    openLessonDetail();
+  });
+}
+document.querySelectorAll('.subject-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    state.subject = card.dataset.subject;
+    openSubjectHub();
+  });
+});
+
+/* ============================================================
+   SUBJECT HUB
+   ============================================================ */
+function openSubjectHub(){
+  const s = SUBJECTS[state.subject];
+  const hub = document.getElementById('screen-subject-hub');
+  hub.className = 'screen ' + s.theme;
+  document.getElementById('hub-subject-name').textContent = s.name;
+  document.getElementById('hub-subject-grade').textContent = gradeLabel(state.grade);
+  document.querySelectorAll('.sem-tab').forEach(t=> t.classList.toggle('active', parseInt(t.dataset.sem,10)===state.semester));
+  showScreen('screen-subject-hub');
+}
+document.querySelectorAll('.sem-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    state.semester = parseInt(tab.dataset.sem,10);
+    document.querySelectorAll('.sem-tab').forEach(t=>t.classList.toggle('active', t===tab));
+  });
+});
+document.querySelectorAll('.mode-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    const mode = card.dataset.mode;
+    if(mode==='lessons') openLessonsList();
+    else if(mode==='exams') openExamSetup();
+    else if(mode==='tutor') openTutor();
+    else if(mode==='photo') openPhoto();
+    else if(mode==='history') openHistory();
+  });
+});
+
+/* ============================================================
+   LESSONS
+   ============================================================ */
+function openLessonsList(){
+  const s = SUBJECTS[state.subject];
+  document.getElementById('lessons-crumb').textContent = `${s.name} · ${semLabel(state.semester)}`;
+  const topics = CURRICULUM[state.subject][state.grade][state.semester];
+  const doneList = (state.progress[state.subject] && state.progress[state.subject][state.semester]) || [];
+  const list = document.getElementById('lessons-list');
+  list.innerHTML = topics.map((t,i)=>{
+    const done = doneList.includes(t);
+    return `<button class="topic-row ${done?'done':''}" data-topic="${escapeHtml(t)}">
+      <div class="num">${toArabicNum(i+1)}</div>
+      <div class="t">${escapeHtml(t)}</div>
+      ${done?'<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':''}
+    </button>`;
+  }).join('');
+  list.querySelectorAll('.topic-row').forEach(row=>{
+    row.addEventListener('click', ()=>{ state.currentTopic = row.dataset.topic; openLessonDetail(); });
+  });
+  showScreen('screen-lessons');
+}
+
+async function openLessonDetail(){
+  const s = SUBJECTS[state.subject];
+  document.getElementById('lesson-crumb').textContent = `${s.name} · ${semLabel(state.semester)}`;
+  document.getElementById('lesson-title').textContent = state.currentTopic;
+  const body = document.getElementById('lesson-body');
+  body.innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري إعداد الشرح...</p></div>`;
+  showScreen('screen-lesson-detail');
+
+  try{
+    const prompt = `اشرح للطالب درس "${state.currentTopic}" من مادة ${s.name} - ${gradeLabel(state.grade)} في سلطنة عُمان، ضمن ${semLabel(state.semester)}.
+اجعل الشرح بالتنسيق التالي بالضبط (بدون Markdown مثل ** أو *، فقط الأسطر كما هي):
+- ابدأ سطر بـ "## " للعناوين الرئيسية
+- استخدم "- " لبداية كل نقطة في قائمة
+- فقرات عادية بدون رمز في البداية
+غطِّ: مقدمة قصيرة، المفاهيم الأساسية، شرح مفصل خطوة بخطوة بأسلوب مبسّط، مثال أو مثالين محلولين، ثم خلاصة بأهم النقاط، ثم نصائح للمذاكرة والفهم. استخدم $...$ للمعادلات إن وجدت. لا تتجاوز ٤٠٠ كلمة تقريباً.`;
+    const text = await callAI({
+      system: baseSystemContext(),
+      messages:[{role:'user', content: prompt}],
+      maxTokens: 1800
+    });
+    body.innerHTML = `
+      <div class="content-box">${formatAIText(text)}</div>
+      <div class="detail-actions">
+        <button class="btn btn-outline" id="btn-ask-about-lesson">اسأل عن هذا الدرس</button>
+        <button class="btn btn-rose" id="btn-complete-lesson">تم — أنهيت الدرس ✓</button>
+      </div>`;
+    typesetMath(body);
+    document.getElementById('btn-ask-about-lesson').addEventListener('click', ()=>{
+      openTutor();
+      seedTutorMessage(`لدي سؤال بخصوص درس "${state.currentTopic}"، هل يمكنك مساعدتي؟`);
+    });
+    document.getElementById('btn-complete-lesson').addEventListener('click', markLessonComplete);
+  }catch(err){
+    body.innerHTML = `<div class="error-box">تعذّر تحميل الشرح، تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</div>
+      <div class="detail-actions"><button class="btn btn-rose" id="btn-retry-lesson">إعادة المحاولة</button></div>`;
+    document.getElementById('btn-retry-lesson').addEventListener('click', openLessonDetail);
+  }
+}
+async function markLessonComplete(){
+  const subj = state.subject, sem = state.semester, topic = state.currentTopic;
+  if(!state.progress[subj]) state.progress[subj] = {1:[],2:[]};
+  if(!state.progress[subj][sem]) state.progress[subj][sem] = [];
+  if(!state.progress[subj][sem].includes(topic)) state.progress[subj][sem].push(topic);
+  await saveProgress(state.studentId, state.progress);
+  showToast('أحسنت! تم تسجيل إنجاز الدرس', 'success');
+  openLessonsList();
+}
+
+/* ============================================================
+   EXAMS — SETUP
+   ============================================================ */
+let selectedExamType = null;
+function openExamSetup(){
+  const s = SUBJECTS[state.subject];
+  document.getElementById('exam-setup-crumb').textContent = `${s.name} · ${semLabel(state.semester)}`;
+  selectedExamType = null;
+  document.querySelectorAll('.exam-type-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('topic-pick-wrap').classList.add('hidden');
+  const sel = document.getElementById('quick-topic-select');
+  sel.innerHTML = CURRICULUM[state.subject][state.grade][state.semester].map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  showScreen('screen-exam-setup');
+}
+document.querySelectorAll('.exam-type-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    document.querySelectorAll('.exam-type-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedExamType = card.dataset.type;
+    document.getElementById('topic-pick-wrap').classList.toggle('hidden', selectedExamType!=='quick');
+  });
+});
+document.getElementById('btn-start-exam').addEventListener('click', async ()=>{
+  if(!selectedExamType){ showToast('اختر نوع الاختبار أولاً','error'); return; }
+  await generateExam(selectedExamType);
+});
+
+async function generateExam(type){
+  const s = SUBJECTS[state.subject];
+  const cfg = EXAM_TYPES[type];
+  let scopeTopics;
+  if(type==='quick'){ scopeTopics = [document.getElementById('quick-topic-select').value]; }
+  else if(type==='periodic'){
+    const doneList = (state.progress[state.subject] && state.progress[state.subject][state.semester]) || [];
+    scopeTopics = doneList.length ? doneList : CURRICULUM[state.subject][state.grade][state.semester].slice(0,3);
+  } else {
+    scopeTopics = CURRICULUM[state.subject][state.grade][state.semester];
+  }
+  showScreen('screen-exam-taking');
+  document.getElementById('exam-taking-crumb').textContent = `${s.name} · ${cfg.name}`;
+  document.getElementById('exam-taking-title').textContent = 'جاري تجهيز الاختبار...';
+  document.getElementById('exam-questions').innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري إعداد ${cfg.name}...</p></div>`;
+
+  try{
+    const prompt = `أنشئ اختباراً في مادة ${s.name} لطالب في ${gradeLabel(state.grade)} في سلطنة عُمان، يغطي المواضيع التالية: ${scopeTopics.join('، ')}.
+عدد الأسئلة: ${cfg.count}. اجعل نحو ٧٠٪ من نوع اختيار من متعدد (mcq) بأربعة خيارات، والباقي أسئلة قصيرة (short).
+أجب فقط بصيغة JSON صحيحة دون أي نص إضافي أو علامات Markdown، بالشكل التالي بالضبط:
+{"questions":[{"type":"mcq","question":"نص السؤال","options":["أ","ب","ج","د"],"answerIndex":0,"topic":"اسم الموضوع"},{"type":"short","question":"نص السؤال","modelAnswer":"إجابة نموذجية مختصرة","topic":"اسم الموضوع"}]}
+استخدم $...$ داخل نص الأسئلة عند الحاجة لمعادلات.`;
+    const raw = await callAI({ system: baseSystemContext(), messages:[{role:'user', content: prompt}], maxTokens: 2800 });
+    const parsed = extractJSON(raw);
+    if(!parsed.questions || !parsed.questions.length) throw new Error('empty_exam');
+    state.currentExam = { type, questions: parsed.questions };
+    state.studentAnswers = new Array(parsed.questions.length).fill(null);
+    renderExamQuestions();
+  }catch(err){
+    document.getElementById('exam-questions').innerHTML = `<div class="error-box">تعذّر إنشاء الاختبار، تحقق من الاتصال وحاول مرة أخرى.</div>`;
+    document.getElementById('exam-taking-title').textContent = 'حدث خطأ';
+  }
+}
+function renderExamQuestions(){
+  const cfg = EXAM_TYPES[state.currentExam.type];
+  document.getElementById('exam-taking-title').textContent = cfg.name + ' — ' + toArabicNum(state.currentExam.questions.length) + ' أسئلة';
+  const wrap = document.getElementById('exam-questions');
+  const letters = ['أ','ب','ج','د'];
+  wrap.innerHTML = state.currentExam.questions.map((q,i)=>{
+    let inner = `<div class="q-num">السؤال ${toArabicNum(i+1)}</div><div class="q-text">${escapeHtml(q.question)}</div>`;
+    if(q.type==='mcq'){
+      inner += q.options.map((opt,oi)=>`
+        <div class="opt-row" data-qi="${i}" data-oi="${oi}">
+          <div class="letter">${letters[oi]||oi+1}</div><span class="opt-text">${escapeHtml(opt)}</span>
+        </div>`).join('');
+    } else {
+      inner += `<textarea class="short-input" data-qi="${i}" placeholder="اكتب إجابتك هنا..."></textarea>`;
+    }
+    return `<div class="q-card" id="qcard-${i}">${inner}</div>`;
+  }).join('');
+  wrap.querySelectorAll('.opt-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const qi = parseInt(row.dataset.qi,10), oi = parseInt(row.dataset.oi,10);
+      state.studentAnswers[qi] = oi;
+      document.querySelectorAll(`.opt-row[data-qi="${qi}"]`).forEach(r=>r.classList.remove('picked'));
+      row.classList.add('picked');
+    });
+  });
+  wrap.querySelectorAll('.short-input').forEach(ta=>{
+    ta.addEventListener('input', ()=>{ state.studentAnswers[parseInt(ta.dataset.qi,10)] = ta.value; });
+  });
+  typesetMath(wrap);
+}
+document.getElementById('btn-submit-exam').addEventListener('click', gradeExam);
+
+async function gradeExam(){
+  const exam = state.currentExam;
+  const answers = state.studentAnswers;
+  const unanswered = answers.filter(a=>a===null || a==='').length;
+  if(unanswered>0){
+    if(!confirm(`لديك ${toArabicNum(unanswered)} سؤال بدون إجابة، هل تريد التسليم على أي حال؟`)) return;
+  }
+  showScreen('screen-exam-results');
+  document.getElementById('res-body').innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري تصحيح إجاباتك...</p></div>`;
+  document.querySelector('.fixed-cta').classList.add('hidden');
+
+  const mcqResults = [];
+  exam.questions.forEach((q,i)=>{
+    if(q.type==='mcq') mcqResults[i] = { correct: answers[i]===q.answerIndex };
+  });
+  const shortIdx = [];
+  exam.questions.forEach((q,i)=>{ if(q.type==='short') shortIdx.push(i); });
+  const shortPayload = shortIdx.map(i=>({ index:i, question:exam.questions[i].question, modelAnswer:exam.questions[i].modelAnswer, topic:exam.questions[i].topic, studentAnswer: answers[i]||'(لم يُجب)' }));
+  const mcqSummary = exam.questions.map((q,i)=> q.type==='mcq' ? {index:i, topic:q.topic, correct: !!(mcqResults[i]&&mcqResults[i].correct)} : null).filter(Boolean);
+
+  try{
+    const prompt = `طالب في ${gradeLabel(state.grade)} في سلطنة عُمان أنهى اختباراً في مادة ${SUBJECTS[state.subject].name}.
+نتائج الأسئلة الاختيارية (تم تصحيحها تلقائياً): ${JSON.stringify(mcqSummary)}
+الأسئلة المقالية القصيرة وإجابات الطالب عليها: ${JSON.stringify(shortPayload)}
+المطلوب منك:
+1) صحّح كل سؤال مقالي (قارن إجابة الطالب بالإجابة النموذجية بمرونة، اقبل الصياغات المرادفة الصحيحة علمياً).
+2) بناءً على الأسئلة الاختيارية والمقالية معاً، شخّص نقاط الضعف (المواضيع التي يحتاج الطالب لمراجعتها).
+3) اذكر نقاط القوة إن وجدت.
+4) قدّم نصائح دراسية عملية ومحددة لتحسين الأداء.
+أجب فقط بصيغة JSON صحيحة دون أي نص إضافي، بالشكل التالي بالضبط:
+{"shortResults":[{"index":0,"correct":true,"feedback":"شرح مختصر"}],"weaknesses":["موضوع١"],"strengths":["موضوع٢"],"tips":["نصيحة١","نصيحة٢"]}`;
+    const raw = await callAI({ system: baseSystemContext(), messages:[{role:'user', content: prompt}], maxTokens: 2200 });
+    const parsed = extractJSON(raw);
+    const shortMap = {}; (parsed.shortResults||[]).forEach(r=> shortMap[r.index]=r);
+
+    let score = 0;
+    exam.questions.forEach((q,i)=>{
+      if(q.type==='mcq' && mcqResults[i] && mcqResults[i].correct) score++;
+      if(q.type==='short' && shortMap[i] && shortMap[i].correct) score++;
+    });
+    const max = exam.questions.length;
+    const pct = Math.round((score/max)*100);
+
+    const record = { date:new Date().toISOString(), subject:state.subject, semester:state.semester, examType:exam.type, score, maxScore:max, weaknesses: parsed.weaknesses||[] };
+    const hist = await loadHistory(state.studentId); hist.unshift(record); await saveHistory(state.studentId, hist);
+
+    document.getElementById('res-score').textContent = `${toArabicNum(score)}/${toArabicNum(max)}`;
+    document.getElementById('res-pct').textContent = `نسبة النجاح: ${toArabicNum(pct)}٪`;
+
+    let html = '<div class="res-section"><h4>تفاصيل الأسئلة</h4>';
+    exam.questions.forEach((q,i)=>{
+      let correct, fb='';
+      if(q.type==='mcq'){
+        correct = mcqResults[i] && mcqResults[i].correct;
+        const letters=['أ','ب','ج','د'];
+        fb = correct ? 'إجابة صحيحة 👏' : `الإجابة الصحيحة: ${letters[q.answerIndex]||''} — ${escapeHtml(q.options[q.answerIndex]||'')}`;
+      } else {
+        const r = shortMap[i]||{correct:false, feedback:'تعذّر تقييم هذه الإجابة'};
+        correct = r.correct; fb = escapeHtml(r.feedback||'');
+      }
+      html += `<div class="res-q"><div class="top">
+        <div class="badge ${correct?'ok':'bad'}">${correct?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'}</div>
+        <div class="qt">${escapeHtml(q.question)}</div></div>
+        <div class="fb">${fb}</div></div>`;
+    });
+    html += '</div>';
+
+    if((parsed.weaknesses||[]).length){
+      html += `<div class="res-section"><h4>نقاط تحتاج مراجعة</h4><div class="chip-list">${parsed.weaknesses.map(w=>`<span class="chip">${escapeHtml(w)}</span>`).join('')}</div></div>`;
+    }
+    if((parsed.tips||[]).length){
+      html += `<div class="res-section"><h4>نصائح لتحسين أدائك</h4>${parsed.tips.map(t=>`<div class="tip-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg><span>${escapeHtml(t)}</span></div>`).join('')}</div>`;
+    }
+    document.getElementById('res-body').innerHTML = html;
+    typesetMath(document.getElementById('res-body'));
+  }catch(err){
+    document.getElementById('res-body').innerHTML = `<div class="error-box">تعذّر تصحيح الاختبار تلقائياً بسبب مشكلة في الاتصال. حاول مرة أخرى.</div>`;
+  }
+  document.querySelector('.fixed-cta').classList.remove('hidden');
+}
+document.getElementById('btn-results-done').addEventListener('click', openSubjectHub);
+
+/* ============================================================
+   TUTOR CHAT
+   ============================================================ */
+function openTutor(){
+  const s = SUBJECTS[state.subject];
+  document.getElementById('hdr-title').textContent = 'المعلّم الذكي — ' + s.name;
+  document.getElementById('hdr-sub').textContent = gradeLabel(state.grade);
+  state.tutorHistory = [];
+  document.getElementById('chat-msgs').innerHTML = `<div class="chat-hint" id="chat-hint">اسأل المعلّم الذكي أي سؤال في ${s.name}، وسيشرح لك الإجابة خطوة بخطوة</div>`;
+  showScreen('screen-tutor');
+}
+
+function appendChatMsg(role, html, isPlain){
+  const hint = document.getElementById('chat-hint'); if(hint) hint.remove();
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role==='user'?'user':'ai');
+  div.innerHTML = isPlain ? escapeHtml(html) : html;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+function appendTyping(){
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ai'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+  wrap.appendChild(div); wrap.scrollTop = wrap.scrollHeight;
+}
+function removeTyping(){ const t = document.getElementById('typing-indicator'); if(t) t.remove(); }
+
+async function sendTutorMessage(text){
+  if(!text || !text.trim()) return;
+  appendChatMsg('user', text, true);
+  state.tutorHistory.push({role:'user', content: text});
+  document.getElementById('chat-input').value='';
+  appendTyping();
+  document.getElementById('btn-send-chat').disabled = true;
+  try{
+    const sys = baseSystemContext() + ` مهمتك أن تجيب عن أي سؤال يطرحه الطالب في مادة ${SUBJECTS[state.subject].name} بشرح علمي مفصّل وسهل، خطوة بخطوة، مع أمثلة عند الحاجة. إن احتجت معلومة حديثة يمكنك البحث في الإنترنت.`;
+    const reply = await callAI({
+      system: sys, messages: state.tutorHistory, maxTokens: 1500,
+      tools: [{type:'web_search_20250305', name:'web_search'}]
+    });
+    removeTyping();
+    state.tutorHistory.push({role:'assistant', content: reply});
+    const el = appendChatMsg('ai', formatAIText(reply));
+    typesetMath(el);
+  }catch(err){
+    removeTyping();
+    appendChatMsg('ai', 'عذراً، حدث خطأ في الاتصال. تحقق من الإنترنت وحاول مرة أخرى.', true);
+  }
+  document.getElementById('btn-send-chat').disabled = false;
+}
+function seedTutorMessage(text){ document.getElementById('chat-input').value = text; }
+document.getElementById('btn-send-chat').addEventListener('click', ()=> sendTutorMessage(document.getElementById('chat-input').value));
+document.getElementById('chat-input').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(document.getElementById('chat-input').value); }
+});
+document.getElementById('chat-input').addEventListener('input', function(){
+  this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,90)+'px';
+});
+
+/* ============================================================
+   PHOTO & UNDERSTAND
+   ============================================================ */
+function openPhoto(){
+  const s = SUBJECTS[state.subject];
+  document.getElementById('photo-crumb').textContent = s.name;
+  document.getElementById('photo-preview').classList.add('hidden');
+  document.getElementById('btn-explain-photo').classList.add('hidden');
+  document.getElementById('photo-result').innerHTML = '';
+  document.getElementById('photo-input').value = '';
+  state.photoBase64 = null; state.photoMediaType = null;
+  showScreen('screen-photo');
+}
+document.getElementById('btn-pick-photo').addEventListener('click', ()=> document.getElementById('photo-input').click());
+document.getElementById('photo-input').addEventListener('change', function(){
+  const file = this.files && this.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    const result = reader.result;
+    state.photoMediaType = file.type || 'image/jpeg';
+    state.photoBase64 = result.split(',')[1];
+    const img = document.getElementById('photo-preview');
+    img.src = result; img.classList.remove('hidden');
+    document.getElementById('btn-explain-photo').classList.remove('hidden');
+    document.getElementById('photo-result').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById('btn-explain-photo').addEventListener('click', async ()=>{
+  if(!state.photoBase64) return;
+  const s = SUBJECTS[state.subject];
+  const resultBox = document.getElementById('photo-result');
+  resultBox.innerHTML = `<div class="loader-box"><div class="spinner"></div><p>جاري تحليل الصورة...</p></div>`;
+  try{
+    const prompt = `هذه صورة لصفحة من كتاب مدرسي في مادة ${s.name} لطالب في ${gradeLabel(state.grade)} في سلطنة عُمان. اشرح محتوى هذه الصفحة بطريقة مبسّطة وواضحة، حدّد المفاهيم الأساسية فيها، ثم أعطِ نصائح حول كيفية الإجابة على الأسئلة المتعلقة بهذا الموضوع، مع حل مثال مشابه إن أمكن. استخدم التنسيق: "## " للعناوين و"- " للنقاط، و$...$ للمعادلات.`;
+    const reply = await callAI({
+      system: baseSystemContext(),
+      messages:[{ role:'user', content:[
+        { type:'image', source:{ type:'base64', media_type: state.photoMediaType, data: state.photoBase64 } },
+        { type:'text', text: prompt }
+      ]}],
+      maxTokens: 1800
+    });
+    resultBox.innerHTML = `<div class="content-box">${formatAIText(reply)}</div>`;
+    typesetMath(resultBox);
+  }catch(err){
+    resultBox.innerHTML = `<div class="error-box">تعذّر تحليل الصورة، تحقق من الاتصال وحاول مرة أخرى.</div>`;
+  }
+});
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+async function openHistory(){
+  const s = SUBJECTS[state.subject];
+  document.getElementById('history-crumb').textContent = s.name;
+  const all = await loadHistory(state.studentId);
+  const list = all.filter(h=>h.subject===state.subject);
+  const wrap = document.getElementById('history-list');
+  if(!list.length){
+    wrap.innerHTML = `<div class="loader-box"><p>لا توجد اختبارات سابقة في هذه المادة بعد</p></div>`;
+  } else {
+    wrap.innerHTML = list.map(h=>{
+      const pct = Math.round((h.score/h.maxScore)*100);
+      const color = pct>=60 ? 'var(--success)' : 'var(--error)';
+      const bg = pct>=60 ? 'var(--success-wash)' : 'var(--error-wash)';
+      const d = new Date(h.date);
+      const dateStr = d.toLocaleDateString('ar-OM', {day:'numeric', month:'short', year:'numeric'});
+      return `<div class="hist-row">
+        <div class="pct" style="background:${bg}; color:${color}">${toArabicNum(pct)}٪</div>
+        <div class="info"><b>${EXAM_TYPES[h.examType]?EXAM_TYPES[h.examType].name:h.examType} · ${semLabel(h.semester)}</b><span>${dateStr} · ${toArabicNum(h.score)}/${toArabicNum(h.maxScore)}</span></div>
+      </div>`;
+    }).join('');
+  }
+  showScreen('screen-history');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(async function init(){
+  const activeId = await storageGet('wy-active-student', null);
+  if(activeId){
+    const students = await loadStudents();
+    const st = students.find(s=>s.id===activeId);
+    if(st){ await activateStudent(activeId, students); return; }
+  }
+  await renderLoginScreen();
+})();
+</script>
+</body>
+</html>
