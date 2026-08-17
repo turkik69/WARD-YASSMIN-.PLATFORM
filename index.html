@@ -177,6 +177,24 @@ img{max-width:100%; display:block;}
 .subject-card.rose .progress-bar i{background:var(--rose);}
 .subject-card.teal .progress-bar i{background:var(--teal);}
 .subject-card.gold .progress-bar i{background:var(--gold);}
+.level-badge{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; background:var(--gold-wash); color:var(--gold-dark); padding:2px 9px; border-radius:20px; font-family:var(--font-d);}
+.stars{color:var(--gold); letter-spacing:1px; direction:ltr; display:inline-block;}
+.stars.dim{color:var(--border);}
+
+/* ===== progress panel (subject hub) ===== */
+.progress-panel{margin:0 16px 6px; background:#fff; border:1px solid var(--border); border-radius:var(--r-l); padding:18px; box-shadow:var(--shadow);}
+.progress-panel .prow{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.progress-panel .plevel{display:flex; align-items:center; gap:8px; font-family:var(--font-d); font-weight:800; font-size:16px;}
+.progress-panel .plevel .em{font-size:22px;}
+.progress-panel .ppct{font-family:var(--font-d); font-weight:900; font-size:15px; color:var(--text-soft);}
+.progress-panel .pbar-track{height:8px; border-radius:6px; background:var(--paper-card); overflow:hidden; margin-bottom:10px;}
+.progress-panel .pbar-fill{height:100%; border-radius:6px; transition:width .4s;}
+.progress-panel .pmsg{font-size:12.5px; color:var(--text-soft); line-height:1.8; margin-bottom:10px;}
+.weak-chips{display:flex; flex-wrap:wrap; gap:6px;}
+.weak-chip{font-size:11.5px; font-weight:700; background:var(--error-wash); color:var(--error); padding:5px 11px; border-radius:20px;}
+.mastery-note{display:flex; align-items:center; gap:8px; font-size:12.5px; padding:9px 12px; border-radius:10px; margin-bottom:7px;}
+.mastery-note.up{background:var(--success-wash); color:var(--success);}
+.mastery-note.down{background:var(--error-wash); color:var(--error);}
 
 /* ===== subject hub ===== */
 .hub-banner{padding:22px 18px 16px; color:#fff; position:relative; overflow:hidden;}
@@ -418,6 +436,7 @@ img{max-width:100%; display:block;}
     <h2 id="hub-subject-name">المادة</h2>
     <p id="hub-subject-grade">الصف</p>
   </div>
+  <div id="progress-panel-container"></div>
   <div class="sem-tabs">
     <button class="sem-tab" data-sem="1">الفصل الأول</button>
     <button class="sem-tab" data-sem="2">الفصل الثاني</button>
@@ -685,8 +704,26 @@ async function loadStudents(){ return JSON.parse(await storageGet('wy-students',
 async function saveStudents(list){ return storageSet('wy-students', JSON.stringify(list)); }
 async function loadProgress(id){
   const raw = await storageGet('wy-progress-'+id, null);
-  if(raw) { try{ return JSON.parse(raw); }catch(e){} }
-  return { chemistry:{1:[],2:[]}, physics:{1:[],2:[]}, math:{1:[],2:[]} };
+  let prog = null;
+  if(raw){ try{ prog = JSON.parse(raw); }catch(e){} }
+  if(!prog) prog = {};
+  // Shape: progress[subject] = { completed: {1:[topic,...], 2:[...]}, stars: {topic: 1-5} }
+  // Migrates transparently from the earlier shape where progress[subject] was
+  // directly {1:[...], 2:[...]} with no star-tracking.
+  ['chemistry','physics','math'].forEach(subj=>{
+    const cur = prog[subj];
+    if(!cur){
+      prog[subj] = { completed:{1:[],2:[]}, stars:{} };
+    } else if(Array.isArray(cur[1]) || Array.isArray(cur[2])){
+      prog[subj] = { completed:{1:cur[1]||[], 2:cur[2]||[]}, stars:{} };
+    } else {
+      if(!cur.completed) cur.completed = {1:[],2:[]};
+      if(!cur.completed[1]) cur.completed[1] = [];
+      if(!cur.completed[2]) cur.completed[2] = [];
+      if(!cur.stars) cur.stars = {};
+    }
+  });
+  return prog;
 }
 async function saveProgress(id, prog){ return storageSet('wy-progress-'+id, JSON.stringify(prog)); }
 async function loadHistory(id){
@@ -695,6 +732,51 @@ async function loadHistory(id){
   return [];
 }
 async function saveHistory(id, hist){ return storageSet('wy-history-'+id, JSON.stringify(hist)); }
+
+/* ---------- levels, stars & motivation ---------- */
+const LEVELS = [
+  { min:0,  name:'مستكشف',  emoji:'🌱' },
+  { min:20, name:'متدرّب',   emoji:'📘' },
+  { min:45, name:'متمكّن',   emoji:'⚡' },
+  { min:70, name:'ماهر',    emoji:'🏆' },
+  { min:90, name:'خبير',    emoji:'👑' }
+];
+function allTopicsOf(subject){
+  const tree = CURRICULUM[subject][state.grade];
+  return [...tree[1], ...tree[2]];
+}
+function getStars(subject, topic){
+  const s = state.progress[subject] && state.progress[subject].stars;
+  return (s && s[topic]) || 0;
+}
+function subjectStats(subject){
+  const topics = allTopicsOf(subject);
+  const maxStars = topics.length * 5;
+  let earned = 0;
+  topics.forEach(t => { earned += getStars(subject, t); });
+  const pct = maxStars ? Math.round((earned/maxStars)*100) : 0;
+  let level = LEVELS[0];
+  for(const l of LEVELS){ if(pct >= l.min) level = l; }
+  const weak = topics.filter(t => { const s=getStars(subject,t); return s>0 && s<=2; });
+  return { pct, earned, maxStars, level, weak, topicsDone: topics.filter(t=>getStars(subject,t)>0).length, totalTopics: topics.length };
+}
+const MOTIVATION = {
+  lesson_done: ['أحسنت! خطوة ثانية للأمام 🌟','رائع، استمر بهذا الزخم 💪','ممتاز! المنهج يصير أسهل كل درس','تقدّم حقيقي، فخورون فيك 👏'],
+  exam_high: ['أداء قوي جداً! استمر على هذا المستوى 🏆','ممتاز! هذا إتقان حقيقي 🌟','رائع! واضح إنك ذاكرت صح 👏'],
+  exam_mid: ['بداية جيدة، وبمراجعة بسيطة بتتحسن أكثر 💪','قريب من الإتقان، خطوة وحدة تفصلك 🌱','أداء لا بأس فيه — راجع النقاط المحددة وبتقوى'],
+  exam_low: ['ما عليك، هذي فرصتك تتعلم من الأخطاء 🌱','كل خبير كان مبتدئ يوماً — كمّل وما تستسلم 💪','راجع الشرح وجرّب اختبار قصير على نفس الدرس، بتلاحظ فرق'],
+  weak_topic: ['هذا الدرس يحتاج مراجعة بسيطة، جرّب تسأل المعلّم الذكي عنه 💡','نقطة تحتاج تركيز — مو ضعف دائم، بس تحتاج وقت أكثر']
+};
+function pickMotivation(key){
+  const arr = MOTIVATION[key] || MOTIVATION.lesson_done;
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+function starsHtml(count, size){
+  size = size || 13;
+  let html = '<span class="stars" style="font-size:'+size+'px">';
+  for(let i=1;i<=5;i++){ html += i<=count ? '★' : '☆'; }
+  return html+'</span>';
+}
 
 /* ---------- utils ---------- */
 function gradeLabel(g){ return g===9 ? 'الصف التاسع' : 'الصف العاشر'; }
@@ -1006,14 +1088,14 @@ async function renderDashboard(){
   document.getElementById('dash-sub').textContent = `${gradeLabel(state.grade)} · اختر مادة لتبدأ`;
 
   Object.keys(SUBJECTS).forEach(subj=>{
-    const tree = CURRICULUM[subj][state.grade];
-    const total = tree[1].length + tree[2].length;
-    const doneArr = (state.progress[subj] && [...(state.progress[subj][1]||[]),...(state.progress[subj][2]||[])]) || [];
-    const done = doneArr.length;
-    const pct = total? Math.round((done/total)*100) : 0;
-    const bar = document.getElementById('prog-'+subj+'-bar'); if(bar) bar.style.width = pct+'%';
+    const stats = subjectStats(subj);
+    const bar = document.getElementById('prog-'+subj+'-bar'); if(bar) bar.style.width = stats.pct+'%';
     const lbl = document.getElementById('prog-'+subj+'-lbl');
-    if(lbl) lbl.textContent = done===0 ? 'ابدأ رحلتك' : `أنجزت ${toArabicNum(done)} من ${toArabicNum(total)} درساً`;
+    if(lbl){
+      lbl.innerHTML = stats.topicsDone===0
+        ? 'ابدأ رحلتك'
+        : `<span class="level-badge">${stats.level.emoji} ${stats.level.name}</span> &nbsp;أنجزت ${toArabicNum(stats.topicsDone)} من ${toArabicNum(stats.totalTopics)}`;
+    }
   });
 
   renderNudge();
@@ -1025,7 +1107,7 @@ function renderNudge(){
   for(const subj of order){
     for(const sem of [1,2]){
       const topics = CURRICULUM[subj][state.grade][sem];
-      const doneList = (state.progress[subj] && state.progress[subj][sem]) || [];
+      const doneList = (state.progress[subj] && state.progress[subj].completed[sem]) || [];
       const next = topics.find(t=>!doneList.includes(t));
       if(next){ found = {subj, sem, topic:next}; break; }
     }
@@ -1065,7 +1147,29 @@ function openSubjectHub(){
   document.getElementById('hub-subject-name').textContent = s.name;
   document.getElementById('hub-subject-grade').textContent = gradeLabel(state.grade);
   document.querySelectorAll('.sem-tab').forEach(t=> t.classList.toggle('active', parseInt(t.dataset.sem,10)===state.semester));
+  renderProgressPanel();
   showScreen('screen-subject-hub');
+}
+function renderProgressPanel(){
+  const stats = subjectStats(state.subject);
+  const themeColor = {chemistry:'var(--rose)', physics:'var(--teal)', math:'var(--gold)'}[state.subject];
+  let msg;
+  if(stats.topicsDone===0) msg = 'ما بدأت هذه المادة بعد — أول درس هو أهم خطوة 🌱';
+  else if(stats.pct>=90) msg = 'مستوى ممتاز! أنت قريب من إتقان المادة كاملة 👑';
+  else msg = pickMotivation(stats.pct>=45?'exam_high':'exam_mid');
+  let html = `
+    <div class="progress-panel">
+      <div class="prow">
+        <div class="plevel"><span class="em">${stats.level.emoji}</span> ${stats.level.name}</div>
+        <div class="ppct">${toArabicNum(stats.pct)}٪</div>
+      </div>
+      <div class="pbar-track"><div class="pbar-fill" style="width:${stats.pct}%; background:${themeColor}"></div></div>
+      <div class="pmsg">${escapeHtml(msg)} · أنجزت ${toArabicNum(stats.topicsDone)} من ${toArabicNum(stats.totalTopics)} درساً</div>`;
+  if(stats.weak.length){
+    html += `<div class="weak-chips">` + stats.weak.map(t=>`<span class="weak-chip">⚠ ${escapeHtml(t)}</span>`).join('') + `</div>`;
+  }
+  html += `</div>`;
+  document.getElementById('progress-panel-container').innerHTML = html;
 }
 document.querySelectorAll('.sem-tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
@@ -1091,14 +1195,15 @@ function openLessonsList(){
   const s = SUBJECTS[state.subject];
   document.getElementById('lessons-crumb').textContent = `${s.name} · ${semLabel(state.semester)}`;
   const topics = CURRICULUM[state.subject][state.grade][state.semester];
-  const doneList = (state.progress[state.subject] && state.progress[state.subject][state.semester]) || [];
+  const doneList = (state.progress[state.subject] && state.progress[state.subject].completed[state.semester]) || [];
   const list = document.getElementById('lessons-list');
   list.innerHTML = topics.map((t,i)=>{
     const done = doneList.includes(t);
+    const stars = getStars(state.subject, t);
     return `<button class="topic-row ${done?'done':''}" data-topic="${escapeHtml(t)}">
       <div class="num">${toArabicNum(i+1)}</div>
       <div class="t">${escapeHtml(t)}</div>
-      ${done?'<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':''}
+      ${stars>0 ? starsHtml(stars,14) : (done?'<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':'')}
     </button>`;
   }).join('');
   list.querySelectorAll('.topic-row').forEach(row=>{
@@ -1148,11 +1253,11 @@ async function openLessonDetail(){
 }
 async function markLessonComplete(){
   const subj = state.subject, sem = state.semester, topic = state.currentTopic;
-  if(!state.progress[subj]) state.progress[subj] = {1:[],2:[]};
-  if(!state.progress[subj][sem]) state.progress[subj][sem] = [];
-  if(!state.progress[subj][sem].includes(topic)) state.progress[subj][sem].push(topic);
+  const p = state.progress[subj];
+  if(!p.completed[sem].includes(topic)) p.completed[sem].push(topic);
+  if(!p.stars[topic]) p.stars[topic] = 3; // baseline mastery on first completion
   await saveProgress(state.studentId, state.progress);
-  showToast('أحسنت! تم تسجيل إنجاز الدرس', 'success');
+  showToast(`${pickMotivation('lesson_done')} ${starsHtml(p.stars[topic]).replace(/<[^>]+>/g,'')}`, 'success');
   openLessonsList();
 }
 
@@ -1189,7 +1294,7 @@ async function generateExam(type){
   let scopeTopics;
   if(type==='quick'){ scopeTopics = [document.getElementById('quick-topic-select').value]; }
   else if(type==='periodic'){
-    const doneList = (state.progress[state.subject] && state.progress[state.subject][state.semester]) || [];
+    const doneList = (state.progress[state.subject] && state.progress[state.subject].completed[state.semester]) || [];
     scopeTopics = doneList.length ? doneList : CURRICULUM[state.subject][state.grade][state.semester].slice(0,3);
   } else {
     scopeTopics = CURRICULUM[state.subject][state.grade][state.semester];
@@ -1202,6 +1307,7 @@ async function generateExam(type){
   try{
     const prompt = `أنشئ اختباراً في مادة ${s.name} لطالب في ${gradeLabel(state.grade)} في سلطنة عُمان، يغطي المواضيع التالية: ${scopeTopics.join('، ')}.
 عدد الأسئلة: ${cfg.count}. اجعل نحو ٧٠٪ من نوع اختيار من متعدد (mcq) بأربعة خيارات، والباقي أسئلة قصيرة (short).
+مهم جداً: قيمة "topic" في كل سؤال يجب أن تُطابق نصياً وبالضبط أحد هذه الأسماء (دون أي تعديل أو اختصار): ${scopeTopics.map(t=>'"'+t+'"').join('، ')}.
 أجب فقط بصيغة JSON صحيحة دون أي نص إضافي أو علامات Markdown، بالشكل التالي بالضبط:
 {"questions":[{"type":"mcq","question":"نص السؤال","options":["أ","ب","ج","د"],"answerIndex":0,"topic":"اسم الموضوع"},{"type":"short","question":"نص السؤال","modelAnswer":"إجابة نموذجية مختصرة","topic":"اسم الموضوع"}]}
 استخدم $...$ داخل نص الأسئلة عند الحاجة لمعادلات.`;
@@ -1294,13 +1400,50 @@ async function gradeExam(){
     const max = exam.questions.length;
     const pct = Math.round((score/max)*100);
 
+    // ---- mastery/stars update, per topic actually covered in this exam ----
+    const topicTally = {};
+    exam.questions.forEach((q,i)=>{
+      const correct = q.type==='mcq' ? !!(mcqResults[i]&&mcqResults[i].correct) : !!(shortMap[i]&&shortMap[i].correct);
+      if(!topicTally[q.topic]) topicTally[q.topic] = {correct:0, total:0};
+      topicTally[q.topic].total++;
+      if(correct) topicTally[q.topic].correct++;
+    });
+    const masteryChanges = [];
+    const pStars = state.progress[state.subject].stars;
+    Object.keys(topicTally).forEach(topic=>{
+      const {correct, total} = topicTally[topic];
+      const ratio = correct/total;
+      let target;
+      if(ratio>=0.8) target=5; else if(ratio>=0.6) target=4; else if(ratio>=0.4) target=3; else if(ratio>=0.2) target=2; else target=1;
+      const before = pStars[topic] || 0;
+      const after = before>0 ? Math.round((before+target)/2) : target;
+      if(after!==before){ masteryChanges.push({topic, before, after}); }
+      pStars[topic] = after;
+    });
+    await saveProgress(state.studentId, state.progress);
+
     const record = { date:new Date().toISOString(), subject:state.subject, semester:state.semester, examType:exam.type, score, maxScore:max, weaknesses: parsed.weaknesses||[] };
     const hist = await loadHistory(state.studentId); hist.unshift(record); await saveHistory(state.studentId, hist);
 
     document.getElementById('res-score').textContent = `${toArabicNum(score)}/${toArabicNum(max)}`;
     document.getElementById('res-pct').textContent = `نسبة النجاح: ${toArabicNum(pct)}٪`;
 
-    let html = '<div class="res-section"><h4>تفاصيل الأسئلة</h4>';
+    const moodKey = pct>=75 ? 'exam_high' : (pct>=45 ? 'exam_mid' : 'exam_low');
+    let html = `<div class="res-section"><p class="pmsg" style="font-size:13.5px; text-align:center; margin:2px 0 4px;">${escapeHtml(pickMotivation(moodKey))}</p></div>`;
+
+    if(masteryChanges.length){
+      html += `<div class="res-section"><h4>📊 تحديث مستوى الإتقان</h4>`;
+      masteryChanges.forEach(m=>{
+        const up = m.after > m.before;
+        html += `<div class="mastery-note ${up?'up':'down'}">
+          <span>${up?'⬆️':'⚠️'}</span>
+          <span>${escapeHtml(m.topic)}: ${starsHtml(m.before,12)} ← ${starsHtml(m.after,12)}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += '<div class="res-section"><h4>تفاصيل الأسئلة</h4>';
     exam.questions.forEach((q,i)=>{
       let correct, fb='';
       if(q.type==='mcq'){
